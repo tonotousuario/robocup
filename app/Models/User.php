@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\RolUsuario;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -32,7 +33,33 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'rol' => RolUsuario::class,
         ];
+    }
+
+    public function hasRole(RolUsuario ...$roles): bool
+    {
+        return in_array($this->rol, $roles, true);
+    }
+
+    public function isAdministrador(): bool
+    {
+        return $this->hasRole(RolUsuario::Administrador);
+    }
+
+    public function isJuez(): bool
+    {
+        return $this->hasRole(RolUsuario::Juez);
+    }
+
+    public function isCoach(): bool
+    {
+        return $this->hasRole(RolUsuario::Coach);
+    }
+
+    public function isPiloto(): bool
+    {
+        return $this->hasRole(RolUsuario::Piloto);
     }
 
     /** @return HasMany<Robot, $this> */
