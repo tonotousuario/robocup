@@ -26,7 +26,10 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
+            'apellidos' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
+            'telefono' => fake()->phoneNumber(),
+            'rol' => 'Piloto',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -34,6 +37,16 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ];
+    }
+
+    public function juez(): static
+    {
+        return $this->state(fn (array $a) => ['rol' => 'Juez']);
+    }
+
+    public function coach(): static
+    {
+        return $this->state(fn (array $a) => ['rol' => 'Coach']);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace Tests\Feature\Database;
 
 use App\Models\Categoria;
 use App\Models\Institucion;
+use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -32,5 +33,19 @@ class EsquemaTest extends TestCase
         $this->expectException(QueryException::class);
 
         Categoria::factory()->create(['tipo_evaluacion' => 'Invalido']);
+    }
+
+    public function test_usuario_tiene_columnas_de_roboleague(): void
+    {
+        $juez = User::factory()->juez()->create(['apellidos' => 'Pérez']);
+
+        $this->assertDatabaseHas('users', ['apellidos' => 'Pérez', 'rol' => 'Juez']);
+    }
+
+    public function test_rol_invalido_es_rechazado_por_check(): void
+    {
+        $this->expectException(QueryException::class);
+
+        User::factory()->create(['rol' => 'Hacker']);
     }
 }
