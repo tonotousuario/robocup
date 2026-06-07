@@ -3,6 +3,7 @@
 namespace Tests\Feature\Database;
 
 use App\Models\Categoria;
+use App\Models\Encuentro;
 use App\Models\Inscripcion;
 use App\Models\InspeccionChecklist;
 use App\Models\Institucion;
@@ -82,5 +83,14 @@ class EsquemaTest extends TestCase
         InspeccionChecklist::factory()->aprobado()->create();
 
         $this->assertDatabaseHas('inspecciones_checklist', ['estado_aprobacion' => 'Aprobado']);
+    }
+
+    public function test_encuentro_es_auto_referencial(): void
+    {
+        $final = Encuentro::factory()->create(['ronda' => 'Final']);
+        $semi = Encuentro::factory()->create(['ronda' => 'Semifinal', 'id_encuentro_siguiente' => $final->id_encuentro]);
+
+        $this->assertSame($final->id_encuentro, $semi->siguiente->id_encuentro);
+        $this->assertTrue($final->anteriores->contains('id_encuentro', $semi->id_encuentro));
     }
 }
