@@ -27,11 +27,11 @@ class CategoriaFactory extends Factory
 
     public function tiempo(): static
     {
-        return $this->state(fn (array $a) => ['tipo_evaluacion' => 'Tiempo']);
+        return $this->state(fn (array $attributes) => ['tipo_evaluacion' => 'Tiempo']);
     }
 
     public function combate(): static
     {
-        return $this->state(fn (array $a) => ['tipo_evaluacion' => 'Combate']);
+        return $this->state(fn (array $attributes) => ['tipo_evaluacion' => 'Combate']);
     }
 }

@@ -41,12 +41,12 @@ class UserFactory extends Factory
 
     public function juez(): static
     {
-        return $this->state(fn (array $a) => ['rol' => 'Juez']);
+        return $this->state(fn (array $attributes) => ['rol' => 'Juez']);
     }
 
     public function coach(): static
     {
-        return $this->state(fn (array $a) => ['rol' => 'Coach']);
+        return $this->state(fn (array $attributes) => ['rol' => 'Coach']);
     }
 
     /**
