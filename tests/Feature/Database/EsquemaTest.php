@@ -3,7 +3,10 @@
 namespace Tests\Feature\Database;
 
 use App\Models\Categoria;
+use App\Models\Inscripcion;
 use App\Models\Institucion;
+use App\Models\Robot;
+use App\Models\Tarifa;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -47,5 +50,29 @@ class EsquemaTest extends TestCase
         $this->expectException(QueryException::class);
 
         User::factory()->create(['rol' => 'Hacker']);
+    }
+
+    public function test_se_puede_crear_un_robot_con_relaciones(): void
+    {
+        $robot = Robot::factory()->create(['nombre' => 'Trueno']);
+
+        $this->assertDatabaseHas('robots', ['nombre' => 'Trueno']);
+        $this->assertInstanceOf(User::class, $robot->piloto);
+        $this->assertInstanceOf(Categoria::class, $robot->categoria);
+    }
+
+    public function test_se_puede_crear_una_tarifa(): void
+    {
+        Tarifa::factory()->create(['descripcion' => 'Preventa', 'monto' => 150.00]);
+
+        $this->assertDatabaseHas('tarifas', ['descripcion' => 'Preventa']);
+    }
+
+    public function test_se_puede_crear_una_inscripcion(): void
+    {
+        $inscripcion = Inscripcion::factory()->pagada()->create();
+
+        $this->assertDatabaseHas('inscripciones', ['estado_pago' => 'Pagado']);
+        $this->assertInstanceOf(Robot::class, $inscripcion->robot);
     }
 }
