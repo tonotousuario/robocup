@@ -120,4 +120,21 @@ class EsquemaTest extends TestCase
             'numero_vuelta' => 4,
         ]);
     }
+
+    public function test_no_se_permite_numero_vuelta_duplicado_para_misma_inscripcion(): void
+    {
+        $inspeccion = InspeccionChecklist::factory()->aprobado()->create();
+
+        IntentoTiempo::factory()->create([
+            'id_inscripcion' => $inspeccion->id_inscripcion,
+            'numero_vuelta' => 1,
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        IntentoTiempo::factory()->create([
+            'id_inscripcion' => $inspeccion->id_inscripcion,
+            'numero_vuelta' => 1,
+        ]);
+    }
 }
