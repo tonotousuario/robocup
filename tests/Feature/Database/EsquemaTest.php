@@ -7,6 +7,7 @@ use App\Models\Encuentro;
 use App\Models\Inscripcion;
 use App\Models\InspeccionChecklist;
 use App\Models\Institucion;
+use App\Models\ParticipanteEncuentro;
 use App\Models\Robot;
 use App\Models\Tarifa;
 use App\Models\User;
@@ -92,5 +93,18 @@ class EsquemaTest extends TestCase
 
         $this->assertSame($final->id_encuentro, $semi->siguiente->id_encuentro);
         $this->assertTrue($final->anteriores->contains('id_encuentro', $semi->id_encuentro));
+    }
+
+    public function test_se_puede_registrar_participante_con_inspeccion_aprobada(): void
+    {
+        $inspeccion = InspeccionChecklist::factory()->aprobado()->create();
+
+        $participante = ParticipanteEncuentro::factory()->create([
+            'id_inscripcion' => $inspeccion->id_inscripcion,
+        ]);
+
+        $this->assertDatabaseHas('participantes_encuentro', [
+            'id_inscripcion' => $inspeccion->id_inscripcion,
+        ]);
     }
 }
