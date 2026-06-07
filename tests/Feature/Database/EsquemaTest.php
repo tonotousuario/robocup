@@ -14,6 +14,7 @@ use App\Models\Tarifa;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class EsquemaTest extends TestCase
@@ -53,7 +54,13 @@ class EsquemaTest extends TestCase
     {
         $this->expectException(QueryException::class);
 
-        User::factory()->create(['rol' => 'Hacker']);
+        DB::table('users')->insert([
+            'name' => 'Test',
+            'apellidos' => 'User',
+            'email' => 'check-rol@example.test',
+            'password' => 'secret',
+            'rol' => 'Hacker',
+        ]);
     }
 
     public function test_se_puede_crear_un_robot_con_relaciones(): void
