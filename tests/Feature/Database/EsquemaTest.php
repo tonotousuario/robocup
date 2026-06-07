@@ -4,6 +4,7 @@ namespace Tests\Feature\Database;
 
 use App\Models\Categoria;
 use App\Models\Inscripcion;
+use App\Models\InspeccionChecklist;
 use App\Models\Institucion;
 use App\Models\Robot;
 use App\Models\Tarifa;
@@ -74,5 +75,12 @@ class EsquemaTest extends TestCase
 
         $this->assertDatabaseHas('inscripciones', ['estado_pago' => 'Pagado']);
         $this->assertInstanceOf(Robot::class, $inscripcion->robot);
+    }
+
+    public function test_se_puede_crear_una_inspeccion_sobre_inscripcion_pagada(): void
+    {
+        InspeccionChecklist::factory()->aprobado()->create();
+
+        $this->assertDatabaseHas('inspecciones_checklist', ['estado_aprobacion' => 'Aprobado']);
     }
 }
