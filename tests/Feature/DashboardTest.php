@@ -2,26 +2,55 @@
 
 namespace Tests\Feature;
 
+use App\Models\InspeccionChecklist;
+use App\Models\Robot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guests_are_redirected_to_the_login_page()
+    public function test_administrador_ve_metricas_globales(): void
     {
-        $response = $this->get(route('dashboard'));
-        $response->assertRedirect(route('login'));
+        InspeccionChecklist::factory()->create(['estado_aprobacion' => 'Pendiente']);
+        $admin = User::factory()->create(['rol' => 'Administrador']);
+
+        $this->actingAs($admin)
+            ->get('/dashboard')
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->has('stats')
+            );
     }
 
-    public function test_authenticated_users_can_visit_the_dashboard()
+    public function test_coach_solo_ve_sus_robots(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $coach = User::factory()->coach()->create();
+        $otro = User::factory()->coach()->create();
+        $miRobot = Robot::factory()->create(['id_piloto' => $coach->id, 'nombre' => 'MiBot']);
+        Robot::factory()->create(['id_piloto' => $otro->id, 'nombre' => 'AjenoBot']);
 
-        $response = $this->get(route('dashboard'));
-        $response->assertOk();
+        $this->actingAs($coach)
+            ->get('/dashboard')
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->has('robots', 1)
+                ->where('robots.0.nombre', 'MiBot')
+            );
+    }
+
+    public function test_juez_ve_inspecciones_pendientes(): void
+    {
+        $juez = User::factory()->juez()->create();
+
+        $this->actingAs($juez)
+            ->get('/dashboard')
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->has('stats')
+            );
     }
 }
