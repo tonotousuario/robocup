@@ -7,6 +7,7 @@ use App\Models\Encuentro;
 use App\Models\Inscripcion;
 use App\Models\InspeccionChecklist;
 use App\Models\Institucion;
+use App\Models\IntentoTiempo;
 use App\Models\ParticipanteEncuentro;
 use App\Models\Robot;
 use App\Models\Tarifa;
@@ -105,6 +106,18 @@ class EsquemaTest extends TestCase
 
         $this->assertDatabaseHas('participantes_encuentro', [
             'id_inscripcion' => $inspeccion->id_inscripcion,
+        ]);
+    }
+
+    public function test_no_se_permite_numero_vuelta_mayor_a_tres(): void
+    {
+        $inspeccion = InspeccionChecklist::factory()->aprobado()->create();
+
+        $this->expectException(QueryException::class);
+
+        IntentoTiempo::factory()->create([
+            'id_inscripcion' => $inspeccion->id_inscripcion,
+            'numero_vuelta' => 4,
         ]);
     }
 }
