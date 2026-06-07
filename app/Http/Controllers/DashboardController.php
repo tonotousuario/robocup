@@ -68,7 +68,7 @@ class DashboardController extends Controller
                 'id_robot' => $robot->id_robot,
                 'nombre' => $robot->nombre,
                 'categoria' => $robot->categoria?->nombre,
-                'estado_pago' => $robot->inscripciones->last()?->estado_pago ?? 'Sin inscripción',
+                'estado_pago' => $robot->inscripciones->sortByDesc('id_inscripcion')->first()?->estado_pago ?? 'Sin inscripción',
             ])
             ->values()
             ->all();
