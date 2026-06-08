@@ -113,3 +113,32 @@ export type CategoriaCombateOpcion = {
     id_categoria: number;
     nombre: string;
 };
+
+export type CajaPorCategoria = {
+    categoria: string;
+    pagadas: number;
+    recaudado: string;
+};
+
+export type ReporteCaja = {
+    total_recaudado: string;
+    pagadas: number;
+    pendientes: number;
+    canceladas: number;
+    por_categoria: CajaPorCategoria[];
+};
+
+export type PosicionReporte = {
+    id_inscripcion: number;
+    robot: string | null;
+    categoria: string | null;
+    mejor_tiempo: string | null;
+    intentos: number;
+};
+
+export type EmparejamientoVigente = {
+    id_encuentro: number;
+    categoria: string | null;
+    ronda: string;
+    robots: (string | null)[];
+};
