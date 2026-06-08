@@ -137,4 +137,101 @@ class CombateRoundsTest extends TestCase
         $this->assertDatabaseHas('amonestaciones', ['id_encuentro' => $encuentro->id_encuentro, 'id_inscripcion' => $a, 'motivo' => 'Colocó tarde']);
         $this->assertNull($encuentro->fresh()->tipo_resultado);
     }
+
+    private function juez(): User
+    {
+        return User::factory()->juez()->create();
+    }
+
+    private function admin(): User
+    {
+        return User::factory()->create(['rol' => 'Administrador']);
+    }
+
+    public function test_juez_registra_round_via_http(): void
+    {
+        [$encuentro, $a, $b] = $this->encuentroConDos();
+
+        $this->actingAs($this->juez())
+            ->patch("/encuentros/{$encuentro->id_encuentro}/round", ['id_inscripcion_ganador' => $a, 'repetido' => false])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('rounds_encuentro', ['id_encuentro' => $encuentro->id_encuentro, 'id_inscripcion_ganador' => $a]);
+    }
+
+    public function test_coach_y_piloto_no_gestionan_combate(): void
+    {
+        [$encuentro, $a, $b] = $this->encuentroConDos();
+
+        foreach ([User::factory()->coach()->create(), User::factory()->create(['rol' => 'Piloto'])] as $user) {
+            $this->actingAs($user)
+                ->patch("/encuentros/{$encuentro->id_encuentro}/round", ['id_inscripcion_ganador' => $a])
+                ->assertForbidden();
+            $this->actingAs($user)
+                ->patch("/encuentros/{$encuentro->id_encuentro}/default", ['id_inscripcion' => $a])
+                ->assertForbidden();
+            $this->actingAs($user)
+                ->post("/encuentros/{$encuentro->id_encuentro}/amonestacion", ['id_inscripcion' => $a, 'motivo' => 'x'])
+                ->assertForbidden();
+        }
+    }
+
+    public function test_admin_default_via_http(): void
+    {
+        [$encuentro, $a, $b] = $this->encuentroConDos();
+
+        $this->actingAs($this->admin())
+            ->patch("/encuentros/{$encuentro->id_encuentro}/default", ['id_inscripcion' => $a])
+            ->assertRedirect();
+
+        $this->assertSame('Default', $encuentro->fresh()->tipo_resultado);
+    }
+
+    public function test_descalificar_via_http(): void
+    {
+        [$encuentro, $a, $b] = $this->encuentroConDos();
+
+        $this->actingAs($this->juez())
+            ->patch("/encuentros/{$encuentro->id_encuentro}/descalificar", ['id_inscripcion' => $a])
+            ->assertRedirect();
+
+        $this->assertSame('Descalificacion', $encuentro->fresh()->tipo_resultado);
+        $this->assertDatabaseHas('participantes_encuentro', ['id_encuentro' => $encuentro->id_encuentro, 'id_inscripcion' => $b, 'es_ganador' => true]);
+    }
+
+    public function test_no_gestionar_si_ya_hay_ganador(): void
+    {
+        [$encuentro, $a, $b] = $this->encuentroConDos();
+        (new BracketService)->ganarPorDefault($encuentro, $a);
+
+        $this->actingAs($this->juez())
+            ->patch("/encuentros/{$encuentro->id_encuentro}/round", ['id_inscripcion_ganador' => $b])
+            ->assertSessionHasErrors();
+    }
+
+    public function test_amonestar_via_http(): void
+    {
+        [$encuentro, $a, $b] = $this->encuentroConDos();
+
+        $this->actingAs($this->juez())
+            ->post("/encuentros/{$encuentro->id_encuentro}/amonestacion", ['id_inscripcion' => $a, 'motivo' => 'Tocó el robot', 'numero_round' => 1])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('amonestaciones', ['id_encuentro' => $encuentro->id_encuentro, 'motivo' => 'Tocó el robot']);
+    }
+
+    public function test_reparacion_una_sola_vez(): void
+    {
+        $categoria = Categoria::factory()->combate()->create();
+        $inscripcion = $this->inscripcionAprobada($categoria);
+
+        $this->actingAs($this->juez())
+            ->patch("/inscripciones/{$inscripcion->id_inscripcion}/reparacion")
+            ->assertRedirect();
+        $this->assertTrue($inscripcion->fresh()->reparacion_usada);
+
+        $this->actingAs($this->juez())
+            ->patch("/inscripciones/{$inscripcion->id_inscripcion}/reparacion")
+            ->assertSessionHasErrors();
+    }
 }

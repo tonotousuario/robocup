@@ -39,6 +39,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('combate', [EncuentroController::class, 'index'])->name('combate.index');
     Route::post('combate/generar', [EncuentroController::class, 'generar'])->name('combate.generar');
     Route::patch('encuentros/{encuentro}/ganador', [EncuentroController::class, 'registrarGanador'])->name('encuentros.ganador');
+    Route::patch('encuentros/{encuentro}/round', [EncuentroController::class, 'registrarRound'])->name('encuentros.round');
+    Route::patch('encuentros/{encuentro}/default', [EncuentroController::class, 'ganarPorDefault'])->name('encuentros.default');
+    Route::patch('encuentros/{encuentro}/descalificar', [EncuentroController::class, 'descalificar'])->name('encuentros.descalificar');
+    Route::post('encuentros/{encuentro}/amonestacion', [EncuentroController::class, 'amonestar'])->name('encuentros.amonestar');
+    Route::patch('inscripciones/{inscripcion}/reparacion', [EncuentroController::class, 'marcarReparacion'])->name('inscripciones.reparacion');
 });
 
 Route::middleware(['auth', 'verified', 'role:Administrador'])->group(function () {
