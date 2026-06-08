@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Amonestacion;
 use App\Models\Categoria;
 use App\Models\Encuentro;
 use App\Models\Inscripcion;
 use App\Models\ParticipanteEncuentro;
+use App\Models\RoundEncuentro;
 use Illuminate\Support\Facades\DB;
 
 class BracketService
@@ -95,6 +97,61 @@ class BracketService
                 'id_inscripcion' => $idInscripcion,
             ]);
         }
+    }
+
+    public function registrarRound(Encuentro $encuentro, ?int $idGanador, bool $repetido = false): void
+    {
+        $numero = $encuentro->rounds()->count() + 1;
+
+        RoundEncuentro::create([
+            'id_encuentro' => $encuentro->id_encuentro,
+            'numero_round' => $numero,
+            'id_inscripcion_ganador' => $repetido ? null : $idGanador,
+            'repetido' => $repetido,
+        ]);
+
+        if ($repetido || $idGanador === null) {
+            return;
+        }
+
+        $victorias = RoundEncuentro::where('id_encuentro', $encuentro->id_encuentro)
+            ->where('id_inscripcion_ganador', $idGanador)
+            ->count();
+
+        if ($victorias >= 2) {
+            $this->decidirEncuentro($encuentro, $idGanador, 'Rounds');
+        }
+    }
+
+    public function ganarPorDefault(Encuentro $encuentro, int $idGanador): void
+    {
+        $this->decidirEncuentro($encuentro, $idGanador, 'Default');
+    }
+
+    public function descalificar(Encuentro $encuentro, int $idPerdedor): void
+    {
+        $idGanador = (int) ParticipanteEncuentro::where('id_encuentro', $encuentro->id_encuentro)
+            ->where('id_inscripcion', '!=', $idPerdedor)
+            ->value('id_inscripcion');
+
+        $this->decidirEncuentro($encuentro, $idGanador, 'Descalificacion');
+    }
+
+    public function amonestar(Encuentro $encuentro, int $idInscripcion, string $motivo, int $idJuez, ?int $numeroRound = null): void
+    {
+        Amonestacion::create([
+            'id_encuentro' => $encuentro->id_encuentro,
+            'id_inscripcion' => $idInscripcion,
+            'id_juez' => $idJuez,
+            'numero_round' => $numeroRound,
+            'motivo' => $motivo,
+        ]);
+    }
+
+    private function decidirEncuentro(Encuentro $encuentro, int $idGanador, string $tipo): void
+    {
+        $encuentro->update(['tipo_resultado' => $tipo]);
+        $this->registrarGanador($encuentro, $idGanador);
     }
 
     private function nombreRonda(int $matches): string
