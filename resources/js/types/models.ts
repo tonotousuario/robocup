@@ -76,3 +76,22 @@ export type InspeccionListItem = {
         observaciones: string | null;
     } | null;
 };
+
+export type IntentoTiempoData = {
+    numero_vuelta: number;
+    tiempo_logrado: string;
+    penalizacion_segundos: string;
+};
+
+export type CompetidorTiempo = {
+    id_inscripcion: number;
+    robot: string | null;
+    posicion: number | null;
+    mejor_tiempo: string | null;
+    intentos: IntentoTiempoData[];
+};
+
+export type CategoriaTiempoOpcion = {
+    id_categoria: number;
+    nombre: string;
+};
