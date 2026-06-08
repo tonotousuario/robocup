@@ -57,3 +57,22 @@ export type TarifaVigente = {
     descripcion: string;
     monto: string;
 };
+
+export type InspeccionEstado = 'Pendiente' | 'Aprobado' | 'Rechazado' | 'Descalificado';
+
+export type InspeccionListItem = {
+    id_inscripcion: number;
+    robot: string | null;
+    categoria: string | null;
+    piloto: string | null;
+    peso_maximo_g: number | null;
+    dimensiones_maximas: string | null;
+    estado_pago: string;
+    estado: InspeccionEstado;
+    inspeccion: {
+        peso_medido_g: number;
+        dimensiones_medidas: string;
+        estado_aprobacion: string;
+        observaciones: string | null;
+    } | null;
+};
