@@ -5,6 +5,7 @@ use App\Http\Controllers\EncuentroController;
 use App\Http\Controllers\InscripcionController;
 use App\Http\Controllers\InspeccionController;
 use App\Http\Controllers\InstitucionController;
+use App\Http\Controllers\ProyeccionController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\RobotController;
 use App\Http\Controllers\TiempoController;
@@ -12,6 +13,9 @@ use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+Route::get('proyeccion', [ProyeccionController::class, 'index'])->name('proyeccion.index');
+Route::get('proyeccion/combate/{categoria}', [ProyeccionController::class, 'show'])->name('proyeccion.combate');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
