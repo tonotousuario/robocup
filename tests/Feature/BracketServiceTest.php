@@ -135,4 +135,42 @@ class BracketServiceTest extends TestCase
             'id_inscripcion' => $ganador,
         ]);
     }
+
+    public function test_genera_bracket_minimo_de_dos(): void
+    {
+        $categoria = $this->categoriaCombate();
+        $this->aprobados($categoria, 2);
+
+        (new BracketService)->generar($categoria);
+
+        $encuentros = Encuentro::where('id_categoria', $categoria->id_categoria)->get();
+        $this->assertCount(1, $encuentros); // la Final es la única ronda
+        $final = $encuentros->first();
+        $this->assertSame('Final', $final->ronda);
+        $this->assertNull($final->id_encuentro_siguiente);
+        $this->assertSame(2, ParticipanteEncuentro::where('id_encuentro', $final->id_encuentro)->count());
+        // sin byes: nadie marcado ganador todavía
+        $this->assertSame(0, ParticipanteEncuentro::where('id_encuentro', $final->id_encuentro)->where('es_ganador', true)->count());
+    }
+
+    public function test_ganador_de_la_final_no_crea_siguiente(): void
+    {
+        $categoria = $this->categoriaCombate();
+        $this->aprobados($categoria, 2);
+        $service = new BracketService;
+        $service->generar($categoria);
+
+        $final = Encuentro::where('id_categoria', $categoria->id_categoria)->first();
+        $ganador = $final->participantes()->first()->id_inscripcion;
+
+        $service->registrarGanador($final, $ganador);
+
+        $this->assertDatabaseHas('participantes_encuentro', [
+            'id_encuentro' => $final->id_encuentro,
+            'id_inscripcion' => $ganador,
+            'es_ganador' => true,
+        ]);
+        // No hay encuentro siguiente: el total de encuentros sigue en 1
+        $this->assertSame(1, Encuentro::where('id_categoria', $categoria->id_categoria)->count());
+    }
 }
