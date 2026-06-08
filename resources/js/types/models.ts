@@ -37,3 +37,23 @@ export type PilotoOpcion = {
     id: number;
     nombre: string;
 };
+
+export type InscripcionRow = {
+    id_inscripcion: number;
+    robot: string | null;
+    categoria: string | null;
+    piloto: string | null;
+    tarifa: string | null;
+    monto_pagado: string;
+    estado_pago: 'Pendiente' | 'Pagado' | 'Cancelado';
+};
+
+export type RobotInscribible = {
+    id_robot: number;
+    nombre: string;
+};
+
+export type TarifaVigente = {
+    descripcion: string;
+    monto: string;
+};

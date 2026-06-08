@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Bot, Building2, FolderGit2, LayoutGrid, Users } from 'lucide-react';
+import { BookOpen, Bot, Building2, FolderGit2, LayoutGrid, Receipt, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -13,6 +13,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import inscripciones from '@/routes/inscripciones';
 import instituciones from '@/routes/instituciones';
 import robots from '@/routes/robots';
 import usuarios from '@/routes/usuarios';
@@ -41,6 +42,12 @@ const mainNavItems: NavItem[] = [
         title: 'Robots',
         href: robots.index(),
         icon: Bot,
+        roles: ['Administrador', 'Piloto'],
+    },
+    {
+        title: 'Inscripciones',
+        href: inscripciones.index(),
+        icon: Receipt,
         roles: ['Administrador', 'Piloto'],
     },
 ];
