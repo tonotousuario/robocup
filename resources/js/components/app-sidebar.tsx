@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Bot, Building2, ClipboardCheck, FolderGit2, LayoutGrid, Receipt, Timer, Users } from 'lucide-react';
+import { BookOpen, Bot, Building2, ClipboardCheck, FolderGit2, LayoutGrid, Receipt, Swords, Timer, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -20,6 +20,7 @@ import instituciones from '@/routes/instituciones';
 import robots from '@/routes/robots';
 import usuarios from '@/routes/usuarios';
 import { dashboard } from '@/routes';
+import combate from '@/routes/combate';
 import type { Auth, NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -62,6 +63,12 @@ const mainNavItems: NavItem[] = [
         title: 'Tiempos',
         href: tiempos.index(),
         icon: Timer,
+        roles: ['Administrador', 'Juez', 'Coach', 'Piloto'],
+    },
+    {
+        title: 'Combate',
+        href: combate.index(),
+        icon: Swords,
         roles: ['Administrador', 'Juez', 'Coach', 'Piloto'],
     },
 ];

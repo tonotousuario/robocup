@@ -95,3 +95,21 @@ export type CategoriaTiempoOpcion = {
     id_categoria: number;
     nombre: string;
 };
+
+export type ParticipanteBracket = {
+    id_inscripcion: number;
+    robot: string | null;
+    es_ganador: boolean;
+};
+
+export type EncuentroBracket = {
+    id_encuentro: number;
+    ronda: string;
+    id_encuentro_siguiente: number | null;
+    participantes: ParticipanteBracket[];
+};
+
+export type CategoriaCombateOpcion = {
+    id_categoria: number;
+    nombre: string;
+};
