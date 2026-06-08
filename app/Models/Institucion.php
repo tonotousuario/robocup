@@ -20,6 +20,11 @@ class Institucion extends Model
 
     public $timestamps = false;
 
+    public function getRouteKeyName(): string
+    {
+        return 'id_institucion';
+    }
+
     /** @return HasMany<Robot, $this> */
     public function robots(): HasMany
     {
