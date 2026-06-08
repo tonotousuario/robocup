@@ -34,7 +34,7 @@ const getStoredAppearance = (): Appearance => {
         return 'system';
     }
 
-    return (localStorage.getItem('appearance') as Appearance) || 'system';
+    return (localStorage.getItem('appearance') as Appearance) || 'dark';
 };
 
 const isDarkMode = (appearance: Appearance): boolean => {
@@ -76,8 +76,8 @@ export function initializeTheme(): void {
     }
 
     if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'system');
-        setCookie('appearance', 'system');
+        localStorage.setItem('appearance', 'dark');
+        setCookie('appearance', 'dark');
     }
 
     currentAppearance = getStoredAppearance();
