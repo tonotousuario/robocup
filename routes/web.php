@@ -5,6 +5,7 @@ use App\Http\Controllers\InscripcionController;
 use App\Http\Controllers\InspeccionController;
 use App\Http\Controllers\InstitucionController;
 use App\Http\Controllers\RobotController;
+use App\Http\Controllers\TiempoController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +26,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('inspecciones', [InspeccionController::class, 'index'])->name('inspecciones.index');
     Route::post('inspecciones', [InspeccionController::class, 'guardar'])->name('inspecciones.guardar');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('tiempos', [TiempoController::class, 'index'])->name('tiempos.index');
+    Route::post('tiempos', [TiempoController::class, 'guardar'])->name('tiempos.guardar');
 });
 
 Route::middleware(['auth', 'verified', 'role:Administrador'])->group(function () {
