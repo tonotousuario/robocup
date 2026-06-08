@@ -1,4 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
 import UsuarioController from '@/actions/App/Http/Controllers/UsuarioController';
 import ConfirmDeleteDialog from '@/components/confirm-delete-dialog';
 import UsuarioFormDialog from '@/components/usuarios/usuario-form-dialog';
@@ -15,7 +16,14 @@ export default function UsuariosIndex() {
     const { usuarios: rows } = usePage<PageProps>().props;
 
     const destroy = (usuario: UsuarioRow) => {
-        router.delete(UsuarioController.destroy.url(usuario.id), { preserveScroll: true });
+        router.delete(UsuarioController.destroy.url(usuario.id), {
+            preserveScroll: true,
+            onError: (errors) => {
+                if (errors.usuario) {
+                    toast.error(errors.usuario);
+                }
+            },
+        });
     };
 
     return (

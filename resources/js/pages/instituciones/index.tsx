@@ -1,4 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
 import InstitucionController from '@/actions/App/Http/Controllers/InstitucionController';
 import ConfirmDeleteDialog from '@/components/confirm-delete-dialog';
 import InstitucionFormDialog from '@/components/instituciones/institucion-form-dialog';
@@ -14,7 +15,15 @@ export default function InstitucionesIndex() {
     const { instituciones: rows } = usePage<PageProps>().props;
 
     const destroy = (institucion: Institucion) => {
-        router.delete(InstitucionController.destroy.url(institucion.id_institucion), { preserveScroll: true });
+        router.delete(InstitucionController.destroy.url(institucion.id_institucion), {
+            preserveScroll: true,
+            onError: (errors) => {
+                const message = Object.values(errors)[0];
+                if (message) {
+                    toast.error(message);
+                }
+            },
+        });
     };
 
     return (
