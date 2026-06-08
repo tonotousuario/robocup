@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['id_categoria', 'ronda', 'id_encuentro_siguiente'])]
+#[Fillable(['id_categoria', 'ronda', 'id_encuentro_siguiente', 'tipo_resultado'])]
 class Encuentro extends Model
 {
     /** @use HasFactory<EncuentroFactory> */
@@ -43,5 +43,17 @@ class Encuentro extends Model
     public function participantes(): HasMany
     {
         return $this->hasMany(ParticipanteEncuentro::class, 'id_encuentro', 'id_encuentro');
+    }
+
+    /** @return HasMany<RoundEncuentro, $this> */
+    public function rounds(): HasMany
+    {
+        return $this->hasMany(RoundEncuentro::class, 'id_encuentro', 'id_encuentro');
+    }
+
+    /** @return HasMany<Amonestacion, $this> */
+    public function amonestaciones(): HasMany
+    {
+        return $this->hasMany(Amonestacion::class, 'id_encuentro', 'id_encuentro');
     }
 }
