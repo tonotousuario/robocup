@@ -142,3 +142,15 @@ export type EmparejamientoVigente = {
     ronda: string;
     robots: (string | null)[];
 };
+
+export type ProyeccionEnVivo = {
+    id_encuentro: number;
+    ronda: string;
+    robots: (string | null)[];
+};
+
+export type ProyeccionPosicion = {
+    robot: string | null;
+    categoria: string | null;
+    mejor_tiempo: string | null;
+};
