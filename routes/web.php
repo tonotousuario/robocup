@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InscripcionController;
 use App\Http\Controllers\InstitucionController;
 use App\Http\Controllers\RobotController;
 use App\Http\Controllers\UsuarioController;
@@ -14,6 +15,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('robots', RobotController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('inscripciones', [InscripcionController::class, 'index'])->name('inscripciones.index');
+    Route::post('inscripciones', [InscripcionController::class, 'store'])->name('inscripciones.store');
+    Route::patch('inscripciones/{inscripcion}/pagar', [InscripcionController::class, 'pagar'])->name('inscripciones.pagar');
+    Route::patch('inscripciones/{inscripcion}/cancelar', [InscripcionController::class, 'cancelar'])->name('inscripciones.cancelar');
 });
 
 Route::middleware(['auth', 'verified', 'role:Administrador'])->group(function () {
