@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EncuentroController;
 use App\Http\Controllers\InscripcionController;
 use App\Http\Controllers\InspeccionController;
 use App\Http\Controllers\InstitucionController;
@@ -31,6 +32,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('tiempos', [TiempoController::class, 'index'])->name('tiempos.index');
     Route::post('tiempos', [TiempoController::class, 'guardar'])->name('tiempos.guardar');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('combate', [EncuentroController::class, 'index'])->name('combate.index');
+    Route::post('combate/generar', [EncuentroController::class, 'generar'])->name('combate.generar');
+    Route::patch('encuentros/{encuentro}/ganador', [EncuentroController::class, 'registrarGanador'])->name('encuentros.ganador');
 });
 
 Route::middleware(['auth', 'verified', 'role:Administrador'])->group(function () {
