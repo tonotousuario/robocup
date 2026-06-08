@@ -48,31 +48,30 @@ export default function RobotFormDialog({ robot, categorias, instituciones, pilo
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        form
-            .transform((data) => ({
-                ...data,
-                id_institucion: data.id_institucion === SIN_INSTITUCION ? null : data.id_institucion,
-                id_piloto: isAdmin ? data.id_piloto : undefined,
-            }))
-            .submit(
-                isEdit && robot ? 'put' : 'post',
-                isEdit && robot ? RobotController.update.url(robot.id_robot) : RobotController.store.url(),
-                {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        setOpen(false);
-                        if (!isEdit) {
-                            form.reset();
-                        }
-                    },
-                    onError: (errors) => {
-                        const message = Object.values(errors)[0];
-                        if (message) {
-                            toast.error(message);
-                        }
-                    },
+        form.transform((data) => ({
+            ...data,
+            id_institucion: data.id_institucion === SIN_INSTITUCION ? null : data.id_institucion,
+            id_piloto: isAdmin ? data.id_piloto : undefined,
+        }));
+        form.submit(
+            isEdit && robot ? 'put' : 'post',
+            isEdit && robot ? RobotController.update.url(robot.id_robot) : RobotController.store.url(),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setOpen(false);
+                    if (!isEdit) {
+                        form.reset();
+                    }
                 },
-            );
+                onError: (errors) => {
+                    const message = Object.values(errors)[0];
+                    if (message) {
+                        toast.error(message);
+                    }
+                },
+            },
+        );
     };
 
     return (
