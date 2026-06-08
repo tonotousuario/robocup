@@ -5,6 +5,7 @@ use App\Http\Controllers\EncuentroController;
 use App\Http\Controllers\InscripcionController;
 use App\Http\Controllers\InspeccionController;
 use App\Http\Controllers\InstitucionController;
+use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\RobotController;
 use App\Http\Controllers\TiempoController;
 use App\Http\Controllers\UsuarioController;
@@ -45,6 +46,10 @@ Route::middleware(['auth', 'verified', 'role:Administrador'])->group(function ()
         ->only(['index', 'store', 'update', 'destroy'])
         ->parameters(['instituciones' => 'institucion']);
     Route::resource('usuarios', UsuarioController::class)->only(['index', 'store', 'update', 'destroy']);
+});
+
+Route::middleware(['auth', 'verified', 'role:Administrador,Juez'])->group(function () {
+    Route::get('reportes', [ReporteController::class, 'index'])->name('reportes.index');
 });
 
 require __DIR__.'/settings.php';
