@@ -37,7 +37,7 @@ export default function ProyeccionCombate() {
     // Auto-refresh de datos (polling).
     useEffect(() => {
         const id = setInterval(() => {
-            router.reload({ only: ['encuentros', 'enVivo', 'posiciones'] });
+            router.reload({ only: ['encuentros', 'enVivo', 'posiciones', 'reparacionesActivas'] });
         }, POLL_MS);
         return () => clearInterval(id);
     }, []);
