@@ -33,7 +33,7 @@ type PageProps = {
     aprobadosCount: number;
 };
 
-const ORDEN_RONDAS = ['Dieciseisavos', 'Octavos', 'Cuartos', 'Semifinal', 'Final'];
+const ORDEN_RONDAS = ['Dieciseisavos', 'Octavos', 'Cuartos', 'Semifinal', 'Final', 'Tercer lugar'];
 
 export default function CombateIndex() {
     const { categorias, categoriaSeleccionada, encuentros, puedeGenerar, puedeRegistrar, aprobadosCount } =
