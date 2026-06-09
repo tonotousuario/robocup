@@ -53,8 +53,9 @@ class EncuentroController extends Controller
                         'id_inscripcion' => $p->id_inscripcion,
                         'robot' => $p->inscripcion?->robot?->nombre,
                         'es_ganador' => $p->es_ganador,
-                        'reparacion_usada' => $p->inscripcion?->reparacion_usada ?? false,
+                        'reparacion_segundos_consumidos' => $p->inscripcion?->reparacion_segundos_consumidos ?? 0,
                         'reparacion_iniciada_en' => $p->inscripcion?->reparacion_iniciada_en?->toIso8601String(),
+                        'reparacion_restante' => $p->inscripcion?->reparacionRestante() ?? Inscripcion::REPARACION_SEGUNDOS,
                     ])->values(),
                 ])->values();
 
@@ -203,16 +204,39 @@ class EncuentroController extends Controller
         return back()->with('success', 'Amonestación registrada.');
     }
 
-    public function marcarReparacion(Request $request, Inscripcion $inscripcion): RedirectResponse
+    public function iniciarReparacion(Inscripcion $inscripcion): RedirectResponse
     {
         $this->authorize('registrarGanador', Encuentro::class);
 
-        if ($inscripcion->reparacion_usada) {
-            return back()->withErrors(['reparacion' => 'Este robot ya usó su tiempo de reparación.']);
+        if ($inscripcion->reparacion_iniciada_en !== null) {
+            return back()->withErrors(['reparacion' => 'La reparación ya está corriendo.']);
         }
 
-        $inscripcion->update(['reparacion_usada' => true, 'reparacion_iniciada_en' => now()]);
+        if ($inscripcion->reparacionRestante() <= 0) {
+            return back()->withErrors(['reparacion' => 'Sin tiempo de reparación disponible.']);
+        }
 
-        return back()->with('success', 'Tiempo de reparación registrado.');
+        $inscripcion->update(['reparacion_iniciada_en' => now()]);
+
+        return back()->with('success', 'Reparación iniciada.');
+    }
+
+    public function pausarReparacion(Inscripcion $inscripcion): RedirectResponse
+    {
+        $this->authorize('registrarGanador', Encuentro::class);
+
+        if ($inscripcion->reparacion_iniciada_en === null) {
+            return back()->withErrors(['reparacion' => 'La reparación no está corriendo.']);
+        }
+
+        $transcurrido = (int) now()->diffInSeconds($inscripcion->reparacion_iniciada_en, true);
+        $nuevoConsumido = min(Inscripcion::REPARACION_SEGUNDOS, $inscripcion->reparacion_segundos_consumidos + $transcurrido);
+
+        $inscripcion->update([
+            'reparacion_segundos_consumidos' => $nuevoConsumido,
+            'reparacion_iniciada_en' => null,
+        ]);
+
+        return back()->with('success', 'Reparación pausada.');
     }
 }

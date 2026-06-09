@@ -13,8 +13,6 @@ use Inertia\Response;
 
 class ProyeccionController extends Controller
 {
-    private const REPARACION_SEGUNDOS = 300;
-
     public function index(): Response
     {
         return Inertia::render('proyeccion/index', [
@@ -40,12 +38,12 @@ class ProyeccionController extends Controller
 
         $reparacionesActivas = Inscripcion::whereHas('robot', fn ($q) => $q->where('id_categoria', $categoria->id_categoria))
             ->whereNotNull('reparacion_iniciada_en')
-            ->where('reparacion_iniciada_en', '>=', now()->subSeconds(self::REPARACION_SEGUNDOS))
             ->with('robot')
             ->get()
             ->map(fn (Inscripcion $i) => [
                 'robot' => $i->robot?->nombre,
                 'reparacion_iniciada_en' => $i->reparacion_iniciada_en?->toIso8601String(),
+                'reparacion_segundos_consumidos' => $i->reparacion_segundos_consumidos,
             ])
             ->values();
 

@@ -59,9 +59,9 @@ class CombateRoundsTest extends TestCase
         $encuentro->update(['tipo_resultado' => 'Rounds']);
         $this->assertDatabaseHas('encuentros', ['id_encuentro' => $encuentro->id_encuentro, 'tipo_resultado' => 'Rounds']);
 
-        $this->assertFalse($a->fresh()->reparacion_usada);
-        $a->update(['reparacion_usada' => true]);
-        $this->assertTrue($a->fresh()->reparacion_usada);
+        $this->assertSame(0, $a->fresh()->reparacion_segundos_consumidos);
+        $a->update(['reparacion_segundos_consumidos' => 60]);
+        $this->assertSame(60, $a->fresh()->reparacion_segundos_consumidos);
     }
 
     /** @return array{0: Encuentro, 1: int, 2: int} [encuentro, idA, idB] */
@@ -177,7 +177,7 @@ class CombateRoundsTest extends TestCase
                 ->patch("/encuentros/{$encuentro->id_encuentro}/descalificar", ['id_inscripcion' => $a])
                 ->assertForbidden();
             $this->actingAs($user)
-                ->patch("/inscripciones/{$a}/reparacion")
+                ->patch("/inscripciones/{$a}/reparacion/iniciar")
                 ->assertForbidden();
         }
     }
@@ -226,18 +226,14 @@ class CombateRoundsTest extends TestCase
         $this->assertDatabaseHas('amonestaciones', ['id_encuentro' => $encuentro->id_encuentro, 'motivo' => 'Tocó el robot']);
     }
 
-    public function test_reparacion_una_sola_vez(): void
+    public function test_no_se_puede_iniciar_reparacion_sin_saldo(): void
     {
         $categoria = Categoria::factory()->combate()->create();
         $inscripcion = $this->inscripcionAprobada($categoria);
+        $inscripcion->update(['reparacion_segundos_consumidos' => 300]);
 
         $this->actingAs($this->juez())
-            ->patch("/inscripciones/{$inscripcion->id_inscripcion}/reparacion")
-            ->assertRedirect();
-        $this->assertTrue($inscripcion->fresh()->reparacion_usada);
-
-        $this->actingAs($this->juez())
-            ->patch("/inscripciones/{$inscripcion->id_inscripcion}/reparacion")
-            ->assertSessionHasErrors();
+            ->patch("/inscripciones/{$inscripcion->id_inscripcion}/reparacion/iniciar")
+            ->assertSessionHasErrors('reparacion');
     }
 }

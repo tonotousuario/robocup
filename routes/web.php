@@ -47,7 +47,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('encuentros/{encuentro}/default', [EncuentroController::class, 'ganarPorDefault'])->name('encuentros.default');
     Route::patch('encuentros/{encuentro}/descalificar', [EncuentroController::class, 'descalificar'])->name('encuentros.descalificar');
     Route::post('encuentros/{encuentro}/amonestacion', [EncuentroController::class, 'amonestar'])->name('encuentros.amonestar');
-    Route::patch('inscripciones/{inscripcion}/reparacion', [EncuentroController::class, 'marcarReparacion'])->name('inscripciones.reparacion');
+    Route::patch('inscripciones/{inscripcion}/reparacion/iniciar', [EncuentroController::class, 'iniciarReparacion'])->name('inscripciones.reparacion.iniciar');
+    Route::patch('inscripciones/{inscripcion}/reparacion/pausar', [EncuentroController::class, 'pausarReparacion'])->name('inscripciones.reparacion.pausar');
 });
 
 Route::middleware(['auth', 'verified', 'role:Administrador'])->group(function () {

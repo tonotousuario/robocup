@@ -9,9 +9,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['id_robot', 'id_tarifa', 'monto_pagado', 'estado_pago', 'reparacion_usada', 'reparacion_iniciada_en'])]
+#[Fillable(['id_robot', 'id_tarifa', 'monto_pagado', 'estado_pago', 'reparacion_segundos_consumidos', 'reparacion_iniciada_en'])]
 class Inscripcion extends Model
 {
+    public const REPARACION_SEGUNDOS = 300;
+
     /** @use HasFactory<InscripcionFactory> */
     use HasFactory;
 
@@ -29,7 +31,7 @@ class Inscripcion extends Model
         return [
             'fecha_registro' => 'datetime',
             'monto_pagado' => 'decimal:2',
-            'reparacion_usada' => 'boolean',
+            'reparacion_segundos_consumidos' => 'integer',
             'reparacion_iniciada_en' => 'datetime',
         ];
     }
@@ -56,5 +58,14 @@ class Inscripcion extends Model
     public function intentos(): HasMany
     {
         return $this->hasMany(IntentoTiempo::class, 'id_inscripcion', 'id_inscripcion');
+    }
+
+    public function reparacionRestante(): int
+    {
+        $transcurrido = $this->reparacion_iniciada_en !== null
+            ? (int) now()->diffInSeconds($this->reparacion_iniciada_en, true)
+            : 0;
+
+        return max(0, self::REPARACION_SEGUNDOS - $this->reparacion_segundos_consumidos - $transcurrido);
     }
 }
