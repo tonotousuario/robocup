@@ -186,4 +186,20 @@ class InscripcionTest extends TestCase
         // columna no permitida → ignorada (sin error 500)
         $this->actingAs($admin)->get('/inscripciones?sort=robot&dir=asc')->assertOk();
     }
+
+    public function test_index_filtra_por_categoria(): void
+    {
+        $admin = User::factory()->create(['rol' => 'Administrador']);
+        $tarifa = Tarifa::factory()->create();
+        $catA = Categoria::factory()->combate()->create();
+        $catB = Categoria::factory()->combate()->create();
+        $rA = Robot::factory()->create(['id_categoria' => $catA->id_categoria]);
+        $rB = Robot::factory()->create(['id_categoria' => $catB->id_categoria]);
+        Inscripcion::factory()->create(['id_robot' => $rA->id_robot, 'id_tarifa' => $tarifa->id_tarifa]);
+        Inscripcion::factory()->create(['id_robot' => $rB->id_robot, 'id_tarifa' => $tarifa->id_tarifa]);
+
+        $this->actingAs($admin)->get('/inscripciones?categoria='.$catA->id_categoria)
+            ->assertInertia(fn (Assert $page) => $page->has('inscripciones.data', 1)
+                ->where('inscripciones.data.0.categoria', $catA->nombre));
+    }
 }
