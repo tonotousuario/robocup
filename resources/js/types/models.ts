@@ -108,6 +108,12 @@ export type ParticipanteBracket = {
     robot: string | null;
     es_ganador: boolean;
     reparacion_usada: boolean;
+    reparacion_iniciada_en: string | null;
+};
+
+export type ReparacionActiva = {
+    robot: string | null;
+    reparacion_iniciada_en: string;
 };
 
 export type EncuentroBracket = {
