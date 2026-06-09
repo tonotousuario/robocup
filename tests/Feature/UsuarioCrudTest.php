@@ -6,6 +6,7 @@ use App\Models\Robot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class UsuarioCrudTest extends TestCase
@@ -22,6 +23,47 @@ class UsuarioCrudTest extends TestCase
         $this->actingAs(User::factory()->coach()->create())
             ->get('/usuarios')
             ->assertForbidden();
+    }
+
+    public function test_index_usuarios_pagina_busca_y_filtra_por_rol(): void
+    {
+        User::factory()->count(20)->create(['rol' => 'Piloto']);
+        User::factory()->juez()->create(['name' => 'JuezUno']);
+        User::factory()->juez()->create(['name' => 'JuezDos']);
+
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->get('/usuarios')
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('usuarios/index')
+                ->has('usuarios.data')
+                ->where('usuarios.per_page', 15)
+            );
+
+        $this->actingAs($admin)
+            ->get('/usuarios?q=JuezUno')
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('usuarios.data', 1)
+                ->where('usuarios.data.0.name', 'JuezUno')
+            );
+
+        $this->actingAs($admin)
+            ->get('/usuarios?rol=Juez')
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('usuarios.data', fn ($rows) => collect($rows)->every(fn ($r) => $r['rol'] === 'Juez'))
+            );
+
+        $this->actingAs($admin)
+            ->get('/usuarios?sort=name&dir=asc')
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filtros.sort', 'name')
+                ->where('filtros.dir', 'asc')
+            );
+
+        $this->actingAs($admin)
+            ->get('/usuarios?sort=hackcolumn')
+            ->assertOk();
     }
 
     public function test_admin_crea_usuario_con_password_hasheada(): void

@@ -13,10 +13,41 @@ use Inertia\Response;
 
 class UsuarioController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $sortables = ['name', 'email', 'rol'];
+        $sort = in_array($request->query('sort'), $sortables, true) ? $request->query('sort') : 'name';
+        $dir = $request->query('dir') === 'desc' ? 'desc' : 'asc';
+
+        $usuarios = User::query()
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $q = $request->string('q')->toString();
+                $query->where(fn ($w) => $w
+                    ->where('name', 'ilike', "%{$q}%")
+                    ->orWhere('apellidos', 'ilike', "%{$q}%")
+                    ->orWhere('email', 'ilike', "%{$q}%"));
+            })
+            ->when($request->filled('rol'), fn ($query) => $query->where('rol', $request->string('rol')->toString()))
+            ->orderBy($sort, $dir)
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (User $u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'apellidos' => $u->apellidos,
+                'email' => $u->email,
+                'telefono' => $u->telefono,
+                'rol' => $u->rol,
+            ]);
+
         return Inertia::render('usuarios/index', [
-            'usuarios' => User::orderBy('name')->get(['id', 'name', 'apellidos', 'email', 'telefono', 'rol']),
+            'usuarios' => $usuarios,
+            'filtros' => [
+                'q' => $request->query('q', ''),
+                'rol' => $request->query('rol', ''),
+                'sort' => $sort,
+                'dir' => $dir,
+            ],
         ]);
     }
 
