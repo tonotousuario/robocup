@@ -5,6 +5,13 @@ export type Institucion = {
     estado: string;
 };
 
+export type InstitucionRow = {
+    id_institucion: number;
+    nombre: string;
+    tipo: 'Pública' | 'Privada' | 'Independiente';
+    estado: string;
+};
+
 export type UsuarioRow = {
     id: number;
     name: string;

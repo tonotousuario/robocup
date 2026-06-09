@@ -33,7 +33,45 @@ class InstitucionCrudTest extends TestCase
             ->get('/instituciones')
             ->assertInertia(fn (Assert $page) => $page
                 ->component('instituciones/index')
-                ->has('instituciones', 1)
+                ->has('instituciones.data', 1)
+            );
+    }
+
+    public function test_index_instituciones_pagina_busca_y_ordena(): void
+    {
+        Institucion::factory()->create(['nombre' => 'TESCHA']);
+        Institucion::factory()->create(['nombre' => 'UNAM']);
+        Institucion::factory()->create(['nombre' => 'Politécnico']);
+
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->get('/instituciones')
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('instituciones/index')
+                ->has('instituciones.data', 3)
+                ->where('instituciones.per_page', 15)
+            );
+
+        $this->actingAs($admin)
+            ->get('/instituciones?q=UNAM')
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('instituciones.data', 1)
+                ->where('instituciones.data.0.nombre', 'UNAM')
+            );
+
+        $this->actingAs($admin)
+            ->get('/instituciones?sort=nombre&dir=desc')
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('instituciones.data.0.nombre', 'UNAM')
+                ->where('filtros.dir', 'desc')
+            );
+
+        $this->actingAs($admin)
+            ->get('/instituciones?sort=hackcolumn')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filtros.sort', 'nombre')
             );
     }
 
