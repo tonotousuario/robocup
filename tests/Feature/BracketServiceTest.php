@@ -41,8 +41,8 @@ class BracketServiceTest extends TestCase
         $encuentros = Encuentro::where('id_categoria', $categoria->id_categoria)->get();
         $this->assertCount(4, $encuentros); // 2 semifinales + final + tercer lugar
 
-        $final = $encuentros->firstWhere('id_encuentro_siguiente', null);
-        $this->assertSame('Final', $final->ronda);
+        $final = $encuentros->firstWhere('ronda', 'Final');
+        $this->assertNull($final->id_encuentro_siguiente);
 
         $semis = $encuentros->where('ronda', 'Semifinal');
         $this->assertCount(2, $semis);
