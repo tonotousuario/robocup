@@ -35,7 +35,7 @@ class RobotCrudTest extends TestCase
 
         $this->actingAs($this->admin())
             ->get('/robots')
-            ->assertInertia(fn (Assert $page) => $page->component('robots/index')->has('robots', 2));
+            ->assertInertia(fn (Assert $page) => $page->component('robots/index')->has('robots.data', 2));
     }
 
     public function test_piloto_solo_ve_sus_robots(): void
@@ -48,9 +48,50 @@ class RobotCrudTest extends TestCase
             ->get('/robots')
             ->assertInertia(fn (Assert $page) => $page
                 ->component('robots/index')
-                ->has('robots', 1)
-                ->where('robots.0.nombre', 'MiBot')
+                ->has('robots.data', 1)
+                ->where('robots.data.0.nombre', 'MiBot')
             );
+    }
+
+    public function test_index_robots_pagina_busca_y_filtra(): void
+    {
+        $admin = $this->admin();
+        $combate = Categoria::factory()->create(['nombre' => 'Combate']);
+        $sumo = Categoria::factory()->create(['nombre' => 'Sumo']);
+
+        Robot::factory()->create(['nombre' => 'Sierra', 'id_categoria' => $combate->id_categoria]);
+        Robot::factory()->create(['nombre' => 'Alfa', 'id_categoria' => $sumo->id_categoria]);
+        Robot::factory()->create(['nombre' => 'Bravo', 'id_categoria' => $sumo->id_categoria]);
+
+        $this->actingAs($admin)
+            ->get('/robots')
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('robots/index')
+                ->has('robots.data', 3)
+                ->where('robots.per_page', 15)
+            );
+
+        $this->actingAs($admin)
+            ->get('/robots?q=Sierra')
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('robots.data', 1)
+                ->where('robots.data.0.nombre', 'Sierra')
+            );
+
+        $this->actingAs($admin)
+            ->get("/robots?categoria={$sumo->id_categoria}")
+            ->assertInertia(fn (Assert $page) => $page->has('robots.data', 2));
+
+        $this->actingAs($admin)
+            ->get('/robots?sort=nombre&dir=asc')
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('robots.data.0.nombre', 'Alfa')
+                ->where('robots.data.2.nombre', 'Sierra')
+            );
+
+        $this->actingAs($admin)
+            ->get('/robots?sort=hackcolumn')
+            ->assertOk();
     }
 
     public function test_admin_crea_robot_para_un_piloto(): void

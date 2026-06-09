@@ -29,14 +29,27 @@ class RobotController extends Controller
             $query->where('id_piloto', $user->id);
         }
 
-        $robots = $query->get()->map(fn (Robot $robot) => [
+        if ($request->filled('q')) {
+            $query->where('nombre', 'ilike', '%'.$request->string('q')->toString().'%');
+        }
+
+        if ($request->filled('categoria')) {
+            $query->where('id_categoria', $request->integer('categoria'));
+        }
+
+        $ordenables = ['nombre'];
+        $sort = in_array($request->query('sort'), $ordenables, true) ? $request->query('sort') : 'nombre';
+        $dir = $request->query('dir') === 'desc' ? 'desc' : 'asc';
+        $query->reorder($sort, $dir);
+
+        $robots = $query->paginate(15)->withQueryString()->through(fn (Robot $robot) => [
             'id_robot' => $robot->id_robot,
             'nombre' => $robot->nombre,
             'categoria' => $robot->categoria?->nombre,
             'institucion' => $robot->institucion?->nombre,
             'piloto' => $robot->piloto ? $robot->piloto->name.' '.$robot->piloto->apellidos : null,
             'id_piloto' => $robot->id_piloto,
-        ])->values();
+        ]);
 
         return Inertia::render('robots/index', [
             'robots' => $robots,
@@ -46,6 +59,12 @@ class RobotController extends Controller
                 ? User::where('rol', 'Piloto')->orderBy('name')->get(['id', 'name', 'apellidos'])
                     ->map(fn (User $p) => ['id' => $p->id, 'nombre' => $p->name.' '.$p->apellidos])->values()
                 : [],
+            'filtros' => [
+                'q' => $request->query('q', ''),
+                'categoria' => $request->query('categoria', ''),
+                'sort' => $sort,
+                'dir' => $dir,
+            ],
         ]);
     }
 
