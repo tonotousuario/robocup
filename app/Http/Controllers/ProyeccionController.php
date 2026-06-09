@@ -78,10 +78,27 @@ class ProyeccionController extends Controller
             return null;
         }
 
+        $encuentro = Encuentro::with(['participantes.inscripcion.robot', 'rounds', 'amonestaciones.inscripcion.robot'])
+            ->find($e['id_encuentro']);
+
+        $marcador = $encuentro->participantes->map(fn ($p) => [
+            'robot' => $p->inscripcion?->robot?->nombre,
+            'rounds' => $encuentro->rounds
+                ->where('id_inscripcion_ganador', $p->id_inscripcion)
+                ->count(),
+        ])->values();
+
+        $amonestaciones = $encuentro->amonestaciones->map(fn ($a) => [
+            'robot' => $a->inscripcion?->robot?->nombre,
+            'motivo' => $a->motivo,
+        ])->values();
+
         return [
             'id_encuentro' => $e['id_encuentro'],
             'ronda' => $e['ronda'],
             'robots' => collect($e['participantes'])->pluck('robot')->values(),
+            'marcador' => $marcador,
+            'amonestaciones' => $amonestaciones,
         ];
     }
 
