@@ -75,6 +75,15 @@ class BracketService
                 }
             }
 
+            // Encuentro por el 3er lugar (solo si hay semifinales).
+            if ($size >= 4) {
+                Encuentro::create([
+                    'id_categoria' => $categoria->id_categoria,
+                    'ronda' => 'Tercer lugar',
+                    'id_encuentro_siguiente' => null,
+                ]);
+            }
+
             // Auto-avance de byes.
             foreach ($ronda1 as $index => $match) {
                 if ($index < $byes) {
@@ -96,6 +105,25 @@ class BracketService
                 'id_encuentro' => $encuentro->id_encuentro_siguiente,
                 'id_inscripcion' => $idInscripcion,
             ]);
+        }
+
+        if ($encuentro->ronda === 'Semifinal') {
+            $tercerLugar = Encuentro::where('id_categoria', $encuentro->id_categoria)
+                ->where('ronda', 'Tercer lugar')
+                ->first();
+
+            if ($tercerLugar !== null) {
+                $idPerdedor = ParticipanteEncuentro::where('id_encuentro', $encuentro->id_encuentro)
+                    ->where('id_inscripcion', '!=', $idInscripcion)
+                    ->value('id_inscripcion');
+
+                if ($idPerdedor !== null) {
+                    ParticipanteEncuentro::firstOrCreate([
+                        'id_encuentro' => $tercerLugar->id_encuentro,
+                        'id_inscripcion' => $idPerdedor,
+                    ]);
+                }
+            }
         }
     }
 

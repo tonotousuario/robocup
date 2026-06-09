@@ -39,7 +39,7 @@ class BracketServiceTest extends TestCase
         (new BracketService)->generar($categoria);
 
         $encuentros = Encuentro::where('id_categoria', $categoria->id_categoria)->get();
-        $this->assertCount(3, $encuentros); // 2 semifinales + final
+        $this->assertCount(4, $encuentros); // 2 semifinales + final + tercer lugar
 
         $final = $encuentros->firstWhere('id_encuentro_siguiente', null);
         $this->assertSame('Final', $final->ronda);
@@ -60,7 +60,7 @@ class BracketServiceTest extends TestCase
         (new BracketService)->generar($categoria);
 
         $encuentros = Encuentro::where('id_categoria', $categoria->id_categoria)->get();
-        $this->assertCount(7, $encuentros);
+        $this->assertCount(8, $encuentros); // 4 cuartos + 2 semis + final + tercer lugar
         $this->assertCount(4, $encuentros->where('ronda', 'Cuartos'));
         $this->assertCount(2, $encuentros->where('ronda', 'Semifinal'));
         $this->assertCount(1, $encuentros->where('ronda', 'Final'));
@@ -110,7 +110,7 @@ class BracketServiceTest extends TestCase
         $service->generar($categoria);
         $service->generar($categoria);
 
-        $this->assertSame(3, Encuentro::where('id_categoria', $categoria->id_categoria)->count());
+        $this->assertSame(4, Encuentro::where('id_categoria', $categoria->id_categoria)->count()); // 2 semis + final + tercer lugar
     }
 
     public function test_registrar_ganador_avanza_al_siguiente(): void

@@ -53,7 +53,7 @@ class ProyeccionTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('proyeccion/combate')
                 ->where('categoria.id_categoria', $categoria->id_categoria)
-                ->has('encuentros', 3) // 2 semifinales + final
+                ->has('encuentros', 4) // 2 semifinales + final + tercer lugar
             );
     }
 

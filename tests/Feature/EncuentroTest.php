@@ -63,7 +63,7 @@ class EncuentroTest extends TestCase
             ->post('/combate/generar', ['id_categoria' => $categoria->id_categoria])
             ->assertRedirect();
 
-        $this->assertSame(3, Encuentro::where('id_categoria', $categoria->id_categoria)->count());
+        $this->assertSame(4, Encuentro::where('id_categoria', $categoria->id_categoria)->count()); // 2 semis + final + tercer lugar
     }
 
     public function test_generar_con_menos_de_dos_falla(): void
