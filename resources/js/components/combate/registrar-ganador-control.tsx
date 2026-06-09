@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import EncuentroController from '@/actions/App/Http/Controllers/EncuentroController';
 import { Button } from '@/components/ui/button';
+import { useCuentaRegresiva } from '@/hooks/use-cuenta-regresiva';
 import {
     Dialog,
     DialogContent,
@@ -100,23 +101,15 @@ export default function PanelEncuentro({ encuentro }: Props) {
                 ))}
             </div>
 
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-2">
                 {encuentro.participantes.map((p) => (
-                    <Button
+                    <BotonReparacion
                         key={`rep-${p.id_inscripcion}`}
-                        size="sm"
-                        variant="ghost"
-                        disabled={p.reparacion_usada}
-                        onClick={() =>
-                            router.patch(
-                                EncuentroController.marcarReparacion.url(p.id_inscripcion),
-                                {},
-                                { preserveScroll: true, onError },
-                            )
-                        }
-                    >
-                        {p.reparacion_usada ? `${p.robot ?? '—'}: reparación usada` : `Reparación ${p.robot ?? '—'}`}
-                    </Button>
+                        idInscripcion={p.id_inscripcion}
+                        robot={p.robot}
+                        usada={p.reparacion_usada}
+                        iniciadaEn={p.reparacion_iniciada_en}
+                    />
                 ))}
             </div>
 
@@ -171,5 +164,47 @@ export default function PanelEncuentro({ encuentro }: Props) {
                 </ul>
             )}
         </div>
+    );
+}
+
+const REPARACION_MS = 300_000;
+
+function BotonReparacion({
+    idInscripcion,
+    robot,
+    usada,
+    iniciadaEn,
+}: {
+    idInscripcion: number;
+    robot: string | null;
+    usada: boolean;
+    iniciadaEn: string | null;
+}) {
+    const finIso = iniciadaEn ? new Date(Date.parse(iniciadaEn) + REPARACION_MS).toISOString() : '';
+    const { segundosRestantes, mmss } = useCuentaRegresiva(finIso);
+
+    if (usada && iniciadaEn) {
+        return (
+            <span className="text-xs text-muted-foreground">
+                {robot ?? '—'}: {segundosRestantes > 0 ? `reparación ${mmss}` : 'reparación terminada'}
+            </span>
+        );
+    }
+
+    return (
+        <Button
+            size="sm"
+            variant="ghost"
+            disabled={usada}
+            onClick={() =>
+                router.patch(
+                    EncuentroController.marcarReparacion.url(idInscripcion),
+                    {},
+                    { preserveScroll: true, onError },
+                )
+            }
+        >
+            Iniciar reparación {robot ?? '—'} (5 min)
+        </Button>
     );
 }

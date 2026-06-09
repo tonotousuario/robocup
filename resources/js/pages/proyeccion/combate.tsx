@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import ProjectionBracket from '@/components/proyeccion/projection-bracket';
 import ProjectionStandings from '@/components/proyeccion/projection-standings';
 import { Button } from '@/components/ui/button';
+import { useCuentaRegresiva } from '@/hooks/use-cuenta-regresiva';
 import proyeccion from '@/routes/proyeccion';
-import type { CategoriaCombateOpcion, EncuentroBracket, ProyeccionEnVivo, ProyeccionPosicion } from '@/types';
+import type { CategoriaCombateOpcion, EncuentroBracket, ProyeccionEnVivo, ProyeccionPosicion, ReparacionActiva } from '@/types';
 
 type Vista = 'bracket' | 'marcador' | 'rotar';
 
@@ -13,10 +14,12 @@ type PageProps = {
     encuentros: EncuentroBracket[];
     enVivo: ProyeccionEnVivo | null;
     posiciones: ProyeccionPosicion[];
+    reparacionesActivas: ReparacionActiva[];
 };
 
 const POLL_MS = 5000;
 const ROTAR_MS = 12000;
+const REPARACION_MS = 300_000;
 
 function vistaFromUrl(): Vista {
     if (typeof window === 'undefined') {
@@ -27,7 +30,7 @@ function vistaFromUrl(): Vista {
 }
 
 export default function ProyeccionCombate() {
-    const { categoria, encuentros, enVivo, posiciones } = usePage<PageProps>().props;
+    const { categoria, encuentros, enVivo, posiciones, reparacionesActivas } = usePage<PageProps>().props;
     const [vista, setVista] = useState<Vista>(vistaFromUrl);
     const [rotarMostrandoBracket, setRotarMostrandoBracket] = useState(true);
 
@@ -78,6 +81,14 @@ export default function ProyeccionCombate() {
                 </div>
             </div>
 
+            {reparacionesActivas.length > 0 && (
+                <div className="mb-6 flex flex-wrap items-center gap-4">
+                    {reparacionesActivas.map((r) => (
+                        <FranjaReparacion key={r.reparacion_iniciada_en + (r.robot ?? '')} robot={r.robot} iniciadaEn={r.reparacion_iniciada_en} />
+                    ))}
+                </div>
+            )}
+
             {vista === 'marcador' && enVivo && (
                 <div className="mb-8 rounded-2xl border-2 border-primary bg-card p-8 text-center">
                     <p className="font-display text-xl uppercase tracking-widest text-muted-foreground">{enVivo.ronda} · En vivo</p>
@@ -93,5 +104,20 @@ export default function ProyeccionCombate() {
                 <ProjectionBracket encuentros={encuentros} />
             )}
         </>
+    );
+}
+
+function FranjaReparacion({ robot, iniciadaEn }: { robot: string | null; iniciadaEn: string }) {
+    const finIso = new Date(Date.parse(iniciadaEn) + REPARACION_MS).toISOString();
+    const { segundosRestantes, mmss } = useCuentaRegresiva(finIso);
+
+    if (segundosRestantes <= 0) {
+        return null;
+    }
+
+    return (
+        <span className="rounded-lg bg-amber-500/20 px-4 py-2 font-display text-2xl text-amber-300">
+            🔧 {robot ?? '—'} · {mmss}
+        </span>
     );
 }
