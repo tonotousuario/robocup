@@ -100,6 +100,26 @@ export default function PanelEncuentro({ encuentro }: Props) {
                 ))}
             </div>
 
+            <div className="flex flex-wrap gap-1">
+                {encuentro.participantes.map((p) => (
+                    <Button
+                        key={`rep-${p.id_inscripcion}`}
+                        size="sm"
+                        variant="ghost"
+                        disabled={p.reparacion_usada}
+                        onClick={() =>
+                            router.patch(
+                                EncuentroController.marcarReparacion.url(p.id_inscripcion),
+                                {},
+                                { preserveScroll: true, onError },
+                            )
+                        }
+                    >
+                        {p.reparacion_usada ? `${p.robot ?? '—'}: reparación usada` : `Reparación ${p.robot ?? '—'}`}
+                    </Button>
+                ))}
+            </div>
+
             <Dialog>
                 <DialogTrigger asChild>
                     <Button size="sm" variant="outline">
