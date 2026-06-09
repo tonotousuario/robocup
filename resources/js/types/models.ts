@@ -175,3 +175,9 @@ export type ProyeccionPosicion = {
     categoria: string | null;
     mejor_tiempo: string | null;
 };
+
+export type Podio = {
+    campeon: string | null;
+    subcampeon: string | null;
+    tercero: string | null;
+};

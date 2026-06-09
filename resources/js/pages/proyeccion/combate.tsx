@@ -1,11 +1,12 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import ProjectionBracket from '@/components/proyeccion/projection-bracket';
+import ProjectionPodium from '@/components/proyeccion/projection-podium';
 import ProjectionStandings from '@/components/proyeccion/projection-standings';
 import { Button } from '@/components/ui/button';
 import { useCuentaRegresiva } from '@/hooks/use-cuenta-regresiva';
 import proyeccion from '@/routes/proyeccion';
-import type { CategoriaCombateOpcion, EncuentroBracket, ProyeccionEnVivo, ProyeccionPosicion, ReparacionActiva } from '@/types';
+import type { CategoriaCombateOpcion, EncuentroBracket, Podio, ProyeccionEnVivo, ProyeccionPosicion, ReparacionActiva } from '@/types';
 
 type Vista = 'bracket' | 'marcador' | 'rotar';
 
@@ -15,6 +16,7 @@ type PageProps = {
     enVivo: ProyeccionEnVivo | null;
     posiciones: ProyeccionPosicion[];
     reparacionesActivas: ReparacionActiva[];
+    podio: Podio | null;
 };
 
 const POLL_MS = 5000;
@@ -29,14 +31,14 @@ function vistaFromUrl(): Vista {
 }
 
 export default function ProyeccionCombate() {
-    const { categoria, encuentros, enVivo, posiciones, reparacionesActivas } = usePage<PageProps>().props;
+    const { categoria, encuentros, enVivo, posiciones, reparacionesActivas, podio } = usePage<PageProps>().props;
     const [vista, setVista] = useState<Vista>(vistaFromUrl);
     const [rotarMostrandoBracket, setRotarMostrandoBracket] = useState(true);
 
     // Auto-refresh de datos (polling).
     useEffect(() => {
         const id = setInterval(() => {
-            router.reload({ only: ['encuentros', 'enVivo', 'posiciones', 'reparacionesActivas'] });
+            router.reload({ only: ['encuentros', 'enVivo', 'posiciones', 'reparacionesActivas', 'podio'] });
         }, POLL_MS);
         return () => clearInterval(id);
     }, []);
@@ -93,35 +95,41 @@ export default function ProyeccionCombate() {
                 </div>
             )}
 
-            {vista === 'marcador' && enVivo && (
-                <div className="mb-8 rounded-2xl border-2 border-primary bg-card p-8 text-center">
-                    <p className="font-display text-xl uppercase tracking-widest text-muted-foreground">{enVivo.ronda} · En vivo</p>
-                    <p className="mt-3 font-display text-5xl font-bold">
-                        {(enVivo.robots[0] ?? '—')} <span className="text-primary">vs</span> {(enVivo.robots[1] ?? '—')}
-                    </p>
-                    {enVivo.marcador.length === 2 && (
-                        <p className="mt-4 text-center font-display text-4xl">
-                            {enVivo.marcador[0].robot ?? '—'}{' '}
-                            <span className="text-primary">{enVivo.marcador[0].rounds}</span>
-                            {' – '}
-                            <span className="text-primary">{enVivo.marcador[1].rounds}</span>{' '}
-                            {enVivo.marcador[1].robot ?? '—'}
-                        </p>
-                    )}
-                    {enVivo.amonestaciones.length > 0 && (
-                        <ul className="mt-4 flex flex-col items-center gap-1 text-xl text-amber-300">
-                            {enVivo.amonestaciones.map((a, i) => (
-                                <li key={`${i}-${a.robot}`}>⚠ {a.robot ?? '—'}: {a.motivo}</li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-            )}
-
-            {vista === 'rotar' && !rotarMostrandoBracket ? (
-                <ProjectionStandings posiciones={posiciones} />
+            {podio ? (
+                <ProjectionPodium podio={podio} />
             ) : (
-                <ProjectionBracket encuentros={encuentros} />
+                <>
+                    {vista === 'marcador' && enVivo && (
+                        <div className="mb-8 rounded-2xl border-2 border-primary bg-card p-8 text-center">
+                            <p className="font-display text-xl uppercase tracking-widest text-muted-foreground">{enVivo.ronda} · En vivo</p>
+                            <p className="mt-3 font-display text-5xl font-bold">
+                                {(enVivo.robots[0] ?? '—')} <span className="text-primary">vs</span> {(enVivo.robots[1] ?? '—')}
+                            </p>
+                            {enVivo.marcador.length === 2 && (
+                                <p className="mt-4 text-center font-display text-4xl">
+                                    {enVivo.marcador[0].robot ?? '—'}{' '}
+                                    <span className="text-primary">{enVivo.marcador[0].rounds}</span>
+                                    {' – '}
+                                    <span className="text-primary">{enVivo.marcador[1].rounds}</span>{' '}
+                                    {enVivo.marcador[1].robot ?? '—'}
+                                </p>
+                            )}
+                            {enVivo.amonestaciones.length > 0 && (
+                                <ul className="mt-4 flex flex-col items-center gap-1 text-xl text-amber-300">
+                                    {enVivo.amonestaciones.map((a, i) => (
+                                        <li key={`${i}-${a.robot}`}>⚠ {a.robot ?? '—'}: {a.motivo}</li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
+
+                    {vista === 'rotar' && !rotarMostrandoBracket ? (
+                        <ProjectionStandings posiciones={posiciones} />
+                    ) : (
+                        <ProjectionBracket encuentros={encuentros} />
+                    )}
+                </>
             )}
         </>
     );
