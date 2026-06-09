@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Categoria;
 use App\Models\Inscripcion;
 use App\Models\Robot;
 use App\Models\Tarifa;
@@ -53,7 +54,7 @@ class InscripcionTest extends TestCase
 
         $this->actingAs($piloto)
             ->get('/inscripciones')
-            ->assertInertia(fn (Assert $page) => $page->component('inscripciones/index')->has('inscripciones', 1));
+            ->assertInertia(fn (Assert $page) => $page->component('inscripciones/index')->has('inscripciones.data', 1));
     }
 
     public function test_piloto_inscribe_su_robot_con_tarifa_vigente(): void
@@ -143,5 +144,46 @@ class InscripcionTest extends TestCase
 
         $this->actingAs($piloto)->patch("/inscripciones/{$inscripcion->id_inscripcion}/pagar")->assertForbidden();
         $this->actingAs($piloto)->patch("/inscripciones/{$inscripcion->id_inscripcion}/cancelar")->assertForbidden();
+    }
+
+    public function test_index_pagina_y_busca(): void
+    {
+        $admin = User::factory()->create(['rol' => 'Administrador']);
+        $cat = Categoria::factory()->combate()->create();
+        $tarifa = Tarifa::factory()->create();
+        foreach (['Tanque', 'Sierra', 'Martillo'] as $n) {
+            $robot = Robot::factory()->create(['id_categoria' => $cat->id_categoria, 'nombre' => $n]);
+            Inscripcion::factory()->create(['id_robot' => $robot->id_robot, 'id_tarifa' => $tarifa->id_tarifa, 'estado_pago' => 'Pagado']);
+        }
+
+        // estructura paginada
+        $this->actingAs($admin)->get('/inscripciones')
+            ->assertInertia(fn (Assert $p) => $p->has('inscripciones.data')->where('inscripciones.per_page', 15));
+
+        // búsqueda por nombre de robot (relación)
+        $this->actingAs($admin)->get('/inscripciones?q=Sierra')
+            ->assertInertia(fn (Assert $p) => $p->has('inscripciones.data', 1)->where('inscripciones.data.0.robot', 'Sierra'));
+    }
+
+    public function test_index_filtra_por_estado_y_ordena(): void
+    {
+        $admin = User::factory()->create(['rol' => 'Administrador']);
+        $cat = Categoria::factory()->combate()->create();
+        $tarifa = Tarifa::factory()->create();
+        $r1 = Robot::factory()->create(['id_categoria' => $cat->id_categoria, 'nombre' => 'A']);
+        $r2 = Robot::factory()->create(['id_categoria' => $cat->id_categoria, 'nombre' => 'B']);
+        Inscripcion::factory()->create(['id_robot' => $r1->id_robot, 'id_tarifa' => $tarifa->id_tarifa, 'estado_pago' => 'Pagado', 'monto_pagado' => 100]);
+        Inscripcion::factory()->create(['id_robot' => $r2->id_robot, 'id_tarifa' => $tarifa->id_tarifa, 'estado_pago' => 'Pendiente', 'monto_pagado' => 200]);
+
+        // filtro por estado
+        $this->actingAs($admin)->get('/inscripciones?estado=Pendiente')
+            ->assertInertia(fn (Assert $p) => $p->has('inscripciones.data', 1)->where('inscripciones.data.0.estado_pago', 'Pendiente'));
+
+        // orden por monto asc (columna permitida)
+        $this->actingAs($admin)->get('/inscripciones?sort=monto_pagado&dir=asc')
+            ->assertInertia(fn (Assert $p) => $p->where('inscripciones.data.0.monto_pagado', fn ($m) => (float) $m === 100.0));
+
+        // columna no permitida → ignorada (sin error 500)
+        $this->actingAs($admin)->get('/inscripciones?sort=robot&dir=asc')->assertOk();
     }
 }

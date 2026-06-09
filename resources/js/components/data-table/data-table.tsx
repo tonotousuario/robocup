@@ -73,10 +73,10 @@ export default function DataTable<T>({ columns, page, rowKey, sort, dir, onSort,
                 </div>
             )}
 
-            {page.meta.last_page > 1 && (
+            {page.last_page > 1 && (
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>
-                        {page.meta.from}–{page.meta.to} de {page.meta.total}
+                        {page.from}–{page.to} de {page.total}
                     </span>
                     <div className="flex gap-1">
                         {page.links.map((link, i) => (

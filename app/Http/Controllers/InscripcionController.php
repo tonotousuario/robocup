@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreInscripcionRequest;
+use App\Models\Categoria;
 use App\Models\Inscripcion;
 use App\Models\Robot;
 use App\Services\TarifaService;
@@ -24,13 +25,33 @@ class InscripcionController extends Controller
 
         $user = $request->user();
 
-        $query = Inscripcion::with(['robot.piloto', 'robot.categoria', 'tarifa'])->orderByDesc('id_inscripcion');
+        $query = Inscripcion::with(['robot.piloto', 'robot.categoria', 'tarifa']);
 
         if (! $user->isAdministrador()) {
             $query->whereHas('robot', fn ($q) => $q->where('id_piloto', $user->id));
         }
 
-        $inscripciones = $query->get()->map(fn (Inscripcion $i) => [
+        if ($request->filled('q')) {
+            $q = $request->string('q')->toString();
+            $query->whereHas('robot', fn ($r) => $r->where('nombre', 'ilike', "%{$q}%")
+                ->orWhereHas('piloto', fn ($p) => $p->where('name', 'ilike', "%{$q}%")->orWhere('apellidos', 'ilike', "%{$q}%"))
+                ->orWhereHas('categoria', fn ($c) => $c->where('nombre', 'ilike', "%{$q}%")));
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('estado_pago', $request->string('estado')->toString());
+        }
+
+        if ($request->filled('categoria')) {
+            $query->whereHas('robot', fn ($r) => $r->where('id_categoria', $request->integer('categoria')));
+        }
+
+        $ordenables = ['id_inscripcion', 'estado_pago', 'monto_pagado'];
+        $sort = in_array($request->query('sort'), $ordenables, true) ? $request->query('sort') : 'id_inscripcion';
+        $dir = $request->query('dir') === 'asc' ? 'asc' : 'desc';
+        $query->orderBy($sort, $dir);
+
+        $inscripciones = $query->paginate(15)->withQueryString()->through(fn (Inscripcion $i) => [
             'id_inscripcion' => $i->id_inscripcion,
             'robot' => $i->robot?->nombre,
             'categoria' => $i->robot?->categoria?->nombre,
@@ -38,7 +59,7 @@ class InscripcionController extends Controller
             'tarifa' => $i->tarifa?->descripcion,
             'monto_pagado' => $i->monto_pagado,
             'estado_pago' => $i->estado_pago,
-        ])->values();
+        ]);
 
         $robotsQuery = Robot::whereDoesntHave('inscripciones', fn ($q) => $q->where('estado_pago', '!=', 'Cancelado'))->orderBy('nombre');
         if (! $user->isAdministrador()) {
@@ -51,6 +72,14 @@ class InscripcionController extends Controller
             'inscripciones' => $inscripciones,
             'robotsInscribibles' => $robotsQuery->get(['id_robot', 'nombre']),
             'tarifaVigente' => $tarifaVigente ? ['descripcion' => $tarifaVigente->descripcion, 'monto' => $tarifaVigente->monto] : null,
+            'categorias' => Categoria::orderBy('nombre')->get(['id_categoria', 'nombre']),
+            'filtros' => [
+                'q' => $request->query('q', ''),
+                'estado' => $request->query('estado', ''),
+                'categoria' => $request->query('categoria', ''),
+                'sort' => $sort,
+                'dir' => $dir,
+            ],
         ]);
     }
 
