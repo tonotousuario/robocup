@@ -53,7 +53,43 @@ class ProyeccionController extends Controller
             'enVivo' => $this->enVivo($encuentros),
             'posiciones' => $this->posiciones(),
             'reparacionesActivas' => $reparacionesActivas,
+            'podio' => $this->podio($categoria),
         ]);
+    }
+
+    /**
+     * @return array<string, string|null>|null
+     */
+    private function podio(Categoria $categoria): ?array
+    {
+        $final = Encuentro::where('id_categoria', $categoria->id_categoria)
+            ->where('ronda', 'Final')
+            ->with('participantes.inscripcion.robot')
+            ->first();
+
+        if ($final === null) {
+            return null;
+        }
+
+        $ganador = $final->participantes->firstWhere('es_ganador', true);
+        if ($ganador === null) {
+            return null;
+        }
+
+        $subcampeon = $final->participantes->first(fn (ParticipanteEncuentro $p) => $p->id_inscripcion !== $ganador->id_inscripcion);
+
+        $tercerLugar = Encuentro::where('id_categoria', $categoria->id_categoria)
+            ->where('ronda', 'Tercer lugar')
+            ->with('participantes.inscripcion.robot')
+            ->first();
+
+        $tercero = $tercerLugar?->participantes->firstWhere('es_ganador', true);
+
+        return [
+            'campeon' => $ganador->inscripcion?->robot?->nombre,
+            'subcampeon' => $subcampeon?->inscripcion?->robot?->nombre,
+            'tercero' => $tercero?->inscripcion?->robot?->nombre,
+        ];
     }
 
     /**

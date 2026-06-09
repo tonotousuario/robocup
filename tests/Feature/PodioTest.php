@@ -9,6 +9,7 @@ use App\Models\InspeccionChecklist;
 use App\Models\Robot;
 use App\Services\BracketService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class PodioTest extends TestCase
@@ -71,5 +72,53 @@ class PodioTest extends TestCase
         $idsTercer = $tercerLugar->participantes()->pluck('id_inscripcion')->sort()->values()->all();
         sort($perdedores);
         $this->assertSame($perdedores, $idsTercer);
+    }
+
+    public function test_show_podio_null_si_final_sin_decidir(): void
+    {
+        $categoria = $this->categoriaConAprobados(4);
+        (new BracketService)->generar($categoria);
+
+        $this->get('/proyeccion/combate/'.$categoria->id_categoria)
+            ->assertInertia(fn (Assert $page) => $page->where('podio', null));
+    }
+
+    public function test_show_podio_con_final_decidida(): void
+    {
+        $categoria = $this->categoriaConAprobados(2); // solo final, sin tercer lugar
+        $service = new BracketService;
+        $service->generar($categoria);
+
+        $final = Encuentro::where('id_categoria', $categoria->id_categoria)->where('ronda', 'Final')->first();
+        $ids = $final->participantes()->pluck('id_inscripcion')->all();
+        $service->registrarGanador($final, $ids[0]);
+
+        $this->get('/proyeccion/combate/'.$categoria->id_categoria)
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('podio')
+                ->where('podio.tercero', null)
+                ->whereNot('podio.campeon', null)
+                ->whereNot('podio.subcampeon', null)
+            );
+    }
+
+    public function test_show_podio_incluye_tercero(): void
+    {
+        $categoria = $this->categoriaConAprobados(4);
+        $service = new BracketService;
+        $service->generar($categoria);
+
+        // Decidir semifinales (enruta perdedores al tercer lugar).
+        foreach (Encuentro::where('id_categoria', $categoria->id_categoria)->where('ronda', 'Semifinal')->get() as $semi) {
+            $service->registrarGanador($semi, $semi->participantes()->pluck('id_inscripcion')->first());
+        }
+        // Decidir final y tercer lugar.
+        $final = Encuentro::where('id_categoria', $categoria->id_categoria)->where('ronda', 'Final')->first();
+        $service->registrarGanador($final, $final->participantes()->pluck('id_inscripcion')->first());
+        $tercer = Encuentro::where('id_categoria', $categoria->id_categoria)->where('ronda', 'Tercer lugar')->first();
+        $service->registrarGanador($tercer, $tercer->participantes()->pluck('id_inscripcion')->first());
+
+        $this->get('/proyeccion/combate/'.$categoria->id_categoria)
+            ->assertInertia(fn (Assert $page) => $page->whereNot('podio.tercero', null));
     }
 }
