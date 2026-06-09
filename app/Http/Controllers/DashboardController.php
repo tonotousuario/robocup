@@ -28,7 +28,11 @@ class DashboardController extends Controller
     }
 
     /**
-     * @return array{stats: array<int, array{label: string, value: int|string}>}
+     * @return array{
+     *     stats: array<int, array{label: string, value: int|string}>,
+     *     accionesRapidas: array<int, array{label: string, href: string, icon: string}>,
+     *     atencion: array<int, array{label: string, value: int, href: string, tone: string}>
+     * }
      */
     private function adminStats(): array
     {
@@ -40,11 +44,24 @@ class DashboardController extends Controller
                 ['label' => 'Total recaudado', 'value' => '$'.number_format((float) Inscripcion::where('estado_pago', 'Pagado')->sum('monto_pagado'), 2)],
                 ['label' => 'Inspecciones pendientes', 'value' => InspeccionChecklist::where('estado_aprobacion', 'Pendiente')->count()],
             ],
+            'accionesRapidas' => [
+                ['label' => 'Inscribir robot', 'href' => route('inscripciones.index'), 'icon' => 'ClipboardList'],
+                ['label' => 'Reportes y caja', 'href' => route('reportes.index'), 'icon' => 'BarChart3'],
+                ['label' => 'Combate', 'href' => route('combate.index'), 'icon' => 'Swords'],
+            ],
+            'atencion' => [
+                ['label' => 'Inscripciones pendientes de pago', 'value' => Inscripcion::where('estado_pago', 'Pendiente')->count(), 'href' => route('inscripciones.index'), 'tone' => 'warning'],
+                ['label' => 'Inspecciones pendientes', 'value' => InspeccionChecklist::where('estado_aprobacion', 'Pendiente')->count(), 'href' => route('inspecciones.index'), 'tone' => 'warning'],
+            ],
         ];
     }
 
     /**
-     * @return array{stats: array<int, array{label: string, value: int|string}>}
+     * @return array{
+     *     stats: array<int, array{label: string, value: int|string}>,
+     *     accionesRapidas: array<int, array{label: string, href: string, icon: string}>,
+     *     atencion: array<int, array{label: string, value: int, href: string, tone: string}>
+     * }
      */
     private function juezStats(): array
     {
@@ -53,11 +70,24 @@ class DashboardController extends Controller
                 ['label' => 'Inspecciones pendientes', 'value' => InspeccionChecklist::where('estado_aprobacion', 'Pendiente')->count()],
                 ['label' => 'Encuentros por resolver', 'value' => Encuentro::whereDoesntHave('participantes', fn ($q) => $q->where('es_ganador', true))->count()],
             ],
+            'accionesRapidas' => [
+                ['label' => 'Inspección', 'href' => route('inspecciones.index'), 'icon' => 'ClipboardCheck'],
+                ['label' => 'Combate', 'href' => route('combate.index'), 'icon' => 'Swords'],
+                ['label' => 'Tiempos', 'href' => route('tiempos.index'), 'icon' => 'Timer'],
+            ],
+            'atencion' => [
+                ['label' => 'Inspecciones pendientes', 'value' => InspeccionChecklist::where('estado_aprobacion', 'Pendiente')->count(), 'href' => route('inspecciones.index'), 'tone' => 'warning'],
+                ['label' => 'Encuentros por resolver', 'value' => Encuentro::whereDoesntHave('participantes', fn ($q) => $q->where('es_ganador', true))->count(), 'href' => route('combate.index'), 'tone' => 'accent'],
+            ],
         ];
     }
 
     /**
-     * @return array{stats: array<int, array{label: string, value: int|string}>, robots: array<int, array{id_robot: int, nombre: string, categoria: ?string, estado_pago: string}>}
+     * @return array{
+     *     stats: array<int, array{label: string, value: int|string}>,
+     *     robots: array<int, array{id_robot: int, nombre: string, categoria: ?string, estado_pago: string}>,
+     *     accionesRapidas: array<int, array{label: string, href: string, icon: string}>
+     * }
      */
     private function robotOwnerStats(User $user): array
     {
@@ -78,6 +108,10 @@ class DashboardController extends Controller
                 ['label' => 'Mis robots', 'value' => count($robots)],
             ],
             'robots' => $robots,
+            'accionesRapidas' => [
+                ['label' => 'Mis robots', 'href' => route('robots.index'), 'icon' => 'Bot'],
+                ['label' => 'Inscripciones', 'href' => route('inscripciones.index'), 'icon' => 'ClipboardList'],
+            ],
         ];
     }
 }
