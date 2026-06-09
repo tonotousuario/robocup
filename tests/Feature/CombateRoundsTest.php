@@ -173,6 +173,12 @@ class CombateRoundsTest extends TestCase
             $this->actingAs($user)
                 ->post("/encuentros/{$encuentro->id_encuentro}/amonestacion", ['id_inscripcion' => $a, 'motivo' => 'x'])
                 ->assertForbidden();
+            $this->actingAs($user)
+                ->patch("/encuentros/{$encuentro->id_encuentro}/descalificar", ['id_inscripcion' => $a])
+                ->assertForbidden();
+            $this->actingAs($user)
+                ->patch("/inscripciones/{$a}/reparacion")
+                ->assertForbidden();
         }
     }
 
