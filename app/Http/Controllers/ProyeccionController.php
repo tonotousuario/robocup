@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Categoria;
 use App\Models\Encuentro;
+use App\Models\Inscripcion;
 use App\Models\ParticipanteEncuentro;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,8 @@ use Inertia\Response;
 
 class ProyeccionController extends Controller
 {
+    private const REPARACION_SEGUNDOS = 300;
+
     public function index(): Response
     {
         return Inertia::render('proyeccion/index', [
@@ -35,11 +38,23 @@ class ProyeccionController extends Controller
                 ])->values(),
             ])->values();
 
+        $reparacionesActivas = Inscripcion::whereHas('robot', fn ($q) => $q->where('id_categoria', $categoria->id_categoria))
+            ->whereNotNull('reparacion_iniciada_en')
+            ->where('reparacion_iniciada_en', '>=', now()->subSeconds(self::REPARACION_SEGUNDOS))
+            ->with('robot')
+            ->get()
+            ->map(fn (Inscripcion $i) => [
+                'robot' => $i->robot?->nombre,
+                'reparacion_iniciada_en' => $i->reparacion_iniciada_en?->toIso8601String(),
+            ])
+            ->values();
+
         return Inertia::render('proyeccion/combate', [
             'categoria' => ['id_categoria' => $categoria->id_categoria, 'nombre' => $categoria->nombre],
             'encuentros' => $encuentros,
             'enVivo' => $this->enVivo($encuentros),
             'posiciones' => $this->posiciones(),
+            'reparacionesActivas' => $reparacionesActivas,
         ]);
     }
 

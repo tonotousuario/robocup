@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['id_robot', 'id_tarifa', 'monto_pagado', 'estado_pago', 'reparacion_usada'])]
+#[Fillable(['id_robot', 'id_tarifa', 'monto_pagado', 'estado_pago', 'reparacion_usada', 'reparacion_iniciada_en'])]
 class Inscripcion extends Model
 {
     /** @use HasFactory<InscripcionFactory> */
@@ -30,6 +30,7 @@ class Inscripcion extends Model
             'fecha_registro' => 'datetime',
             'monto_pagado' => 'decimal:2',
             'reparacion_usada' => 'boolean',
+            'reparacion_iniciada_en' => 'datetime',
         ];
     }
 

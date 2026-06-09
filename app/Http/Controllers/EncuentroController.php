@@ -54,6 +54,7 @@ class EncuentroController extends Controller
                         'robot' => $p->inscripcion?->robot?->nombre,
                         'es_ganador' => $p->es_ganador,
                         'reparacion_usada' => $p->inscripcion?->reparacion_usada ?? false,
+                        'reparacion_iniciada_en' => $p->inscripcion?->reparacion_iniciada_en?->toIso8601String(),
                     ])->values(),
                 ])->values();
 
@@ -210,7 +211,7 @@ class EncuentroController extends Controller
             return back()->withErrors(['reparacion' => 'Este robot ya usó su tiempo de reparación.']);
         }
 
-        $inscripcion->update(['reparacion_usada' => true]);
+        $inscripcion->update(['reparacion_usada' => true, 'reparacion_iniciada_en' => now()]);
 
         return back()->with('success', 'Tiempo de reparación registrado.');
     }
