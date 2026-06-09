@@ -2,7 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import EncuentroController from '@/actions/App/Http/Controllers/EncuentroController';
-import RegistrarGanadorControl from '@/components/combate/registrar-ganador-control';
+import PanelEncuentro from '@/components/combate/registrar-ganador-control';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -159,7 +159,7 @@ export default function CombateIndex() {
                                                     ))
                                                 )}
                                                 {puedeRegistrar && encuentro.participantes.length === 2 && !tieneGanador && (
-                                                    <RegistrarGanadorControl encuentro={encuentro} />
+                                                    <PanelEncuentro encuentro={encuentro} />
                                                 )}
                                             </div>
                                         );

@@ -96,10 +96,18 @@ export type CategoriaTiempoOpcion = {
     nombre: string;
 };
 
+export type AmonestacionRow = {
+    id_amonestacion: number;
+    id_inscripcion: number;
+    motivo: string;
+    numero_round: number | null;
+};
+
 export type ParticipanteBracket = {
     id_inscripcion: number;
     robot: string | null;
     es_ganador: boolean;
+    reparacion_usada: boolean;
 };
 
 export type EncuentroBracket = {
@@ -107,6 +115,9 @@ export type EncuentroBracket = {
     ronda: string;
     id_encuentro_siguiente: number | null;
     participantes: ParticipanteBracket[];
+    tipo_resultado: string | null;
+    marcador: Record<string, number>;
+    amonestaciones: AmonestacionRow[];
 };
 
 export type CategoriaCombateOpcion = {
