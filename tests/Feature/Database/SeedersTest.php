@@ -13,7 +13,8 @@ class SeedersTest extends TestCase
     {
         $this->seed();
 
-        $this->assertDatabaseCount('categorias', 4);
+        $this->assertDatabaseCount('categorias', 8);
+        $this->assertDatabaseHas('categorias', ['nombre' => 'Mini Sumo Autónomo Profesional']);
         $this->assertDatabaseCount('tarifas', 4);
         $this->assertDatabaseCount('instituciones', 3);
         $this->assertDatabaseHas('users', ['email' => 'admin@roboleague.test', 'rol' => 'Administrador']);
