@@ -10,3 +10,18 @@ export function cn(...inputs: ClassValue[]) {
 export function toUrl(url: NonNullable<InertiaLinkProps['href']>): string {
     return typeof url === 'string' ? url : url.url;
 }
+
+export function estadoBadgeVariant(estado: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+    switch (estado) {
+        case 'Pagado':
+        case 'Aprobado':
+            return 'default';
+        case 'Pendiente':
+            return 'secondary';
+        case 'Rechazado':
+        case 'Descalificado':
+            return 'destructive';
+        default:
+            return 'outline';
+    }
+}
