@@ -1,4 +1,6 @@
 /.phpunit.cache
+/.playwright-mcp
+/audit-*.png
 /bootstrap/ssr
 /node_modules
 /public/build
