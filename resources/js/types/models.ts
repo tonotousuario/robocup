@@ -164,6 +164,8 @@ export type ProyeccionEnVivo = {
     id_encuentro: number;
     ronda: string;
     robots: (string | null)[];
+    marcador: { robot: string | null; rounds: number }[];
+    amonestaciones: { robot: string | null; motivo: string }[];
 };
 
 export type ProyeccionPosicion = {

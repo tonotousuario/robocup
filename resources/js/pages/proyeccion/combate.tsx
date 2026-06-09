@@ -95,6 +95,22 @@ export default function ProyeccionCombate() {
                     <p className="mt-3 font-display text-5xl font-bold">
                         {(enVivo.robots[0] ?? '—')} <span className="text-primary">vs</span> {(enVivo.robots[1] ?? '—')}
                     </p>
+                    {enVivo.marcador.length === 2 && (
+                        <p className="mt-4 text-center font-display text-4xl">
+                            {enVivo.marcador[0].robot ?? '—'}{' '}
+                            <span className="text-primary">{enVivo.marcador[0].rounds}</span>
+                            {' – '}
+                            <span className="text-primary">{enVivo.marcador[1].rounds}</span>{' '}
+                            {enVivo.marcador[1].robot ?? '—'}
+                        </p>
+                    )}
+                    {enVivo.amonestaciones.length > 0 && (
+                        <ul className="mt-4 flex flex-col items-center gap-1 text-xl text-amber-300">
+                            {enVivo.amonestaciones.map((a, i) => (
+                                <li key={`${i}-${a.robot}`}>⚠ {a.robot ?? '—'}: {a.motivo}</li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
             )}
 
