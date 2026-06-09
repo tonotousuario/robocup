@@ -107,8 +107,9 @@ export default function PanelEncuentro({ encuentro }: Props) {
                         key={`rep-${p.id_inscripcion}`}
                         idInscripcion={p.id_inscripcion}
                         robot={p.robot}
-                        usada={p.reparacion_usada}
+                        consumidos={p.reparacion_segundos_consumidos}
                         iniciadaEn={p.reparacion_iniciada_en}
+                        restante={p.reparacion_restante}
                     />
                 ))}
             </div>
@@ -167,44 +168,59 @@ export default function PanelEncuentro({ encuentro }: Props) {
     );
 }
 
-const REPARACION_MS = 300_000;
+const REPARACION_SEGUNDOS = 300;
+
+function formatearMmss(segundos: number): string {
+    const m = Math.floor(segundos / 60);
+    const s = segundos % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 function BotonReparacion({
     idInscripcion,
     robot,
-    usada,
+    consumidos,
     iniciadaEn,
+    restante,
 }: {
     idInscripcion: number;
     robot: string | null;
-    usada: boolean;
+    consumidos: number;
     iniciadaEn: string | null;
+    restante: number;
 }) {
-    const finIso = iniciadaEn ? new Date(Date.parse(iniciadaEn) + REPARACION_MS).toISOString() : '';
-    const { segundosRestantes, mmss } = useCuentaRegresiva(finIso);
+    const finIso = iniciadaEn
+        ? new Date(Date.parse(iniciadaEn) + (REPARACION_SEGUNDOS - consumidos) * 1000).toISOString()
+        : '';
+    const { mmss } = useCuentaRegresiva(finIso);
 
-    if (usada && iniciadaEn) {
+    if (iniciadaEn) {
         return (
-            <span className="text-xs text-muted-foreground">
-                {robot ?? '—'}: {segundosRestantes > 0 ? `reparación ${mmss}` : 'reparación terminada'}
-            </span>
+            <Button
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                    router.patch(EncuentroController.pausarReparacion.url(idInscripcion), {}, { preserveScroll: true, onError })
+                }
+            >
+                Pausar reparación {robot ?? '—'} ({mmss})
+            </Button>
         );
+    }
+
+    if (restante <= 0) {
+        return <span className="text-xs text-muted-foreground">{robot ?? '—'}: reparación agotada</span>;
     }
 
     return (
         <Button
             size="sm"
             variant="ghost"
-            disabled={usada}
             onClick={() =>
-                router.patch(
-                    EncuentroController.marcarReparacion.url(idInscripcion),
-                    {},
-                    { preserveScroll: true, onError },
-                )
+                router.patch(EncuentroController.iniciarReparacion.url(idInscripcion), {}, { preserveScroll: true, onError })
             }
         >
-            Iniciar reparación {robot ?? '—'} (5 min)
+            Iniciar reparación {robot ?? '—'} ({formatearMmss(restante)} disp.)
         </Button>
     );
 }

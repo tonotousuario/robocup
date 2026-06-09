@@ -19,7 +19,6 @@ type PageProps = {
 
 const POLL_MS = 5000;
 const ROTAR_MS = 12000;
-const REPARACION_MS = 300_000;
 
 function vistaFromUrl(): Vista {
     if (typeof window === 'undefined') {
@@ -84,7 +83,12 @@ export default function ProyeccionCombate() {
             {reparacionesActivas.length > 0 && (
                 <div className="mb-6 flex flex-wrap items-center gap-4">
                     {reparacionesActivas.map((r) => (
-                        <FranjaReparacion key={r.reparacion_iniciada_en + (r.robot ?? '')} robot={r.robot} iniciadaEn={r.reparacion_iniciada_en} />
+                        <FranjaReparacion
+                            key={r.reparacion_iniciada_en + (r.robot ?? '')}
+                            robot={r.robot}
+                            iniciadaEn={r.reparacion_iniciada_en}
+                            consumidos={r.reparacion_segundos_consumidos}
+                        />
                     ))}
                 </div>
             )}
@@ -123,8 +127,10 @@ export default function ProyeccionCombate() {
     );
 }
 
-function FranjaReparacion({ robot, iniciadaEn }: { robot: string | null; iniciadaEn: string }) {
-    const finIso = new Date(Date.parse(iniciadaEn) + REPARACION_MS).toISOString();
+const REPARACION_SEGUNDOS = 300;
+
+function FranjaReparacion({ robot, iniciadaEn, consumidos }: { robot: string | null; iniciadaEn: string; consumidos: number }) {
+    const finIso = new Date(Date.parse(iniciadaEn) + (REPARACION_SEGUNDOS - consumidos) * 1000).toISOString();
     const { segundosRestantes, mmss } = useCuentaRegresiva(finIso);
 
     if (segundosRestantes <= 0) {
