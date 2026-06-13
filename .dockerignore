@@ -1,0 +1,41 @@
+# No copiar al contexto de build (más rápido y seguro)
+.git
+.gitignore
+.github
+
+# dependencias / artefactos (se regeneran en el build)
+/node_modules
+/vendor
+/public/build
+/public/hot
+/public/storage
+/bootstrap/ssr
+/bootstrap/cache/*.php
+
+# entornos y secretos — NUNCA hornear en la imagen
+.env
+.env.*
+!.env.production.example
+
+# datos locales
+/storage/*.key
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/database/*.sqlite
+/database/*.sqlite-*
+
+# infra y herramientas (no hacen falta en la imagen)
+# OJO: NO ignorar /docker -> el Dockerfile copia docker/php y docker/nginx
+docker-compose*.yml
+compose*.y*ml
+/scripts
+/tests
+/.idea
+/.vscode
+*.md
+.editorconfig
+.prettier*
+eslint*
+.phpunit*

@@ -1,0 +1,87 @@
+# =============================================================
+# RoboLeague — despliegue de producción
+#
+#   Prueba LOCAL (sin túnel):
+#     docker compose --env-file .env.production up -d
+#     -> http://localhost:8080
+#
+#   VPS (con túnel Cloudflare):
+#     ./scripts/deploy.sh            # usa --env-file y --profile tunnel
+#
+# IMPORTANTE: siempre pasa --env-file .env.production (o usa deploy.sh).
+# La interpolación ${...} NO lee de env_file:, necesita el --env-file.
+# =============================================================
+name: roboleague
+
+services:
+  # ---- PHP-FPM (Laravel) ----
+  app:
+    build:
+      context: .
+      target: app
+    image: roboleague-app
+    env_file: [.env.production]
+    volumes:
+      - storage_data:/var/www/html/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---- nginx (estáticos + proxy a app) ----
+  web:
+    build:
+      context: .
+      target: web
+    image: roboleague-web
+    depends_on: [app]
+    ports:
+      - "127.0.0.1:8080:80"   # solo localhost, para probar (curl localhost:8080)
+    restart: unless-stopped
+
+  # ---- worker de colas (QUEUE_CONNECTION=database) ----
+  queue:
+    image: roboleague-app
+    env_file: [.env.production]
+    command: php artisan queue:work --tries=3 --max-time=3600 --sleep=2
+    volumes:
+      - storage_data:/var/www/html/storage
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---- PostgreSQL ----
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-roboleague}
+      POSTGRES_USER: ${DB_USERNAME:-roboleague}
+      # Falla con mensaje claro si olvidas --env-file .env.production:
+      POSTGRES_PASSWORD: "${DB_PASSWORD:?Falta DB_PASSWORD; usa --env-file .env.production o ./scripts/deploy.sh}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # $$ -> usa las variables DENTRO del contenedor (no la interpolación de compose)
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---- Cloudflare Tunnel (solo con: --profile tunnel) ----
+  # Crea el túnel en https://one.dash.cloudflare.com (Zero Trust > Networks > Tunnels),
+  # apunta roboleague.tlapala.com -> Service HTTP -> URL  web:80,
+  # y pon el token en CLOUDFLARE_TUNNEL_TOKEN de .env.production.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    profiles: ["tunnel"]
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on: [web]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  storage_data:

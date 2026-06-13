@@ -31,3 +31,7 @@ yarn-error.log
 /.zed
 
 /.superpowers
+
+# Backups de entorno con secretos
+.env.bak*
+.env.*.bak
