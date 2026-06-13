@@ -1,0 +1,20 @@
+# Override para usar las imágenes ya construidas en ghcr.io (en vez de build local).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.ghcr.yml \
+#     --env-file .env.production --profile tunnel pull
+#   docker compose -f docker-compose.yml -f docker-compose.ghcr.yml \
+#     --env-file .env.production --profile tunnel up -d
+#
+# Así el VPS solo descarga las imágenes (rápido) sin necesitar PHP/Node/composer.
+services:
+  app:
+    image: ghcr.io/tonotousuario/robocup-app:latest
+    pull_policy: always
+
+  web:
+    image: ghcr.io/tonotousuario/robocup-web:latest
+    pull_policy: always
+
+  queue:
+    image: ghcr.io/tonotousuario/robocup-app:latest
+    pull_policy: always
