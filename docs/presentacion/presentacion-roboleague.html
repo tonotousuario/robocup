@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoboLeague — Defensa de Proyecto</title>
+
+<!-- ===========================================================
+     TIPOGRAFÍA
+     · Saira Condensed → títulos gigantes de sección (impacto)
+     · Chakra Petch    → títulos de slide, etiquetas y cuerpo (tema de la app)
+     · JetBrains Mono  → modo Blueprint: esquema, diccionario de datos y código
+     =========================================================== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Saira+Condensed:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================================
+   1. TEMA (variables) — cambia aquí para reestilizar todo
+   =========================================================== */
+:root{
+  --bg:#070b16; --bg2:#0a1024;
+  --panel:#0e1730; --panel2:#121d3c; --panel3:#0b1730;
+  --line:rgba(120,160,255,.12); --line-soft:rgba(120,160,255,.07);
+  --blue:#3b82f6; --blue-bright:#4f8cff; --cyan:#22d3ee; --cyan2:#54cfe6;
+  --ink:#eaf2ff; --muted:#8497bd; --dim:#5d709a;
+  --green:#34d399; --amber:#ffb020; --red:#f87171; --gold:#ffd27a;
+
+  --font-display:'Chakra Petch',sans-serif;
+  --font-mega:'Saira Condensed',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+
+  --ease:cubic-bezier(.16,1,.3,1);
+  --stage-bg:#04060d;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* ===========================================================
+   2. FIXED 16:9 STAGE — viewport-base.css (íntegro, obligatorio)
+   =========================================================== */
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--stage-bg,#000);}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:var(--stage-bg,#000);}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:var(--slide-bg,#fff);}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;visibility:hidden;opacity:0;pointer-events:none;background:var(--slide-bg,#fff);}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1;}
+img,video,canvas,svg{max-width:100%;max-height:100%;}
+.deck-controls{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:1000;}
+@media print{
+  html,body{width:1920px;height:auto;overflow:visible;background:#fff;}
+  .deck-viewport{position:static;overflow:visible;background:#fff;}
+  .deck-stage{position:static;width:auto;height:auto;transform:none!important;background:none;}
+  .slide{position:relative;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;width:1920px;height:1080px;break-after:page;page-break-after:always;}
+  .slide:last-child{break-after:auto;page-break-after:auto;}
+  .deck-controls{display:none!important;}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.2s!important;}}
+
+/* ===========================================================
+   3. FONDO — modo ELÉCTRICO (base) y modo BLUEPRINT (BD)
+   =========================================================== */
+.slide{
+  background:
+    radial-gradient(1100px 700px at 84% 8%, rgba(34,211,238,.12), transparent 60%),
+    radial-gradient(950px 800px at 6% 100%, rgba(59,130,246,.16), transparent 60%),
+    linear-gradient(160deg,#070b16 0%, #0a1024 55%, #070b16 100%);
+  color:var(--ink);font-family:var(--font-display);
+}
+.slide .grid{position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(120,160,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(120,160,255,.045) 1px,transparent 1px);
+  background-size:68px 68px;mask-image:radial-gradient(circle at 50% 42%,#000 30%,transparent 82%);}
+
+/* Modo Blueprint: rejilla de plano + marcas de registro en esquinas */
+.slide.blueprint{
+  background:linear-gradient(135deg,#06182b,#0a2742 72%,#06182b);
+}
+.slide.blueprint .grid{
+  background-image:
+    linear-gradient(rgba(120,190,235,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(120,190,235,.16) 1px,transparent 1px),
+    linear-gradient(rgba(120,190,235,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(120,190,235,.06) 1px,transparent 1px);
+  background-size:160px 160px,160px 160px,32px 32px,32px 32px;mask-image:none;}
+.crop{position:absolute;width:52px;height:52px;border:2px solid rgba(120,190,235,.4);pointer-events:none;z-index:2}
+.crop.tl{left:48px;top:48px;border-right:0;border-bottom:0}
+.crop.tr{right:48px;top:48px;border-left:0;border-bottom:0}
+.crop.bl{left:48px;bottom:48px;border-right:0;border-top:0}
+.crop.br{right:48px;bottom:48px;border-left:0;border-top:0}
+
+/* ===========================================================
+   4. REVEALS — animación de entrada escalonada
+   =========================================================== */
+.reveal{opacity:0;transform:translateY(34px);transition:opacity .7s var(--ease),transform .7s var(--ease);}
+.slide.visible .reveal{opacity:1;transform:translateY(0);}
+.reveal.rx{transform:translateX(-44px);}
+.slide.visible .reveal.rx{transform:translateX(0);}
+.reveal.rs{transform:scale(.92);}
+.slide.visible .reveal.rs{transform:scale(1);}
+.r1{transition-delay:.10s}.r2{transition-delay:.20s}.r3{transition-delay:.30s}.r4{transition-delay:.40s}
+.r5{transition-delay:.50s}.r6{transition-delay:.60s}.r7{transition-delay:.70s}.r8{transition-delay:.80s}
+.r9{transition-delay:.90s}.r10{transition-delay:1.0s}.r11{transition-delay:1.1s}.r12{transition-delay:1.2s}
+
+/* ===========================================================
+   5. ELEMENTOS COMUNES
+   =========================================================== */
+.pad{position:absolute;inset:0;padding:96px 120px;display:flex;flex-direction:column;}
+
+/* Pestaña de sección (arriba-izquierda) */
+.sectab{display:flex;align-items:center;gap:16px;font-family:var(--font-mono);font-size:19px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:30px}
+.sectab .n{font-family:var(--font-mega);font-weight:800;font-size:30px;letter-spacing:0;color:#fff;background:linear-gradient(140deg,var(--blue),#2563eb);width:52px;height:52px;display:grid;place-items:center;border-radius:12px;box-shadow:0 10px 28px rgba(37,99,235,.45)}
+.sectab .ln{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent);margin-left:6px}
+
+/* Títulos de slide */
+.stitle{font-family:var(--font-display);font-weight:700;font-size:78px;line-height:1.02;letter-spacing:-1px;margin:0}
+.stitle .c{color:var(--cyan)}
+.ssub{font-family:var(--font-display);font-weight:400;font-size:30px;color:var(--muted);margin:20px 0 0;max-width:1180px}
+.lead{font-weight:600;color:#fff}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:12px}
+.chip{font-family:var(--font-mono);font-size:19px;font-weight:500;color:var(--cyan2);border:1px solid rgba(84,207,230,.35);border-radius:8px;padding:9px 16px;background:rgba(84,207,230,.06)}
+.chip.b{color:#a9c4ff;border-color:rgba(96,140,255,.35);background:rgba(96,140,255,.07)}
+
+/* Tarjetas genéricas */
+.card{background:linear-gradient(160deg,var(--panel),var(--panel3));border:1px solid var(--line);border-radius:18px;padding:34px 32px;position:relative;overflow:hidden}
+.card .ic{width:58px;height:58px;border-radius:14px;display:grid;place-items:center;background:rgba(59,130,246,.14);border:1px solid rgba(96,140,255,.28);margin-bottom:22px}
+.card .ic svg{width:30px;height:30px;stroke:var(--cyan);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card h3{font-family:var(--font-display);font-weight:600;font-size:28px;color:#fff;margin:0 0 10px}
+.card p{font-size:21px;line-height:1.45;color:var(--muted)}
+.card .tagn{position:absolute;top:20px;right:22px;font-family:var(--font-mono);font-size:15px;color:var(--dim)}
+
+/* ===========================================================
+   6. PORTADA / CIERRE
+   =========================================================== */
+.cover{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 130px}
+.cover .scan{position:absolute;left:0;right:0;height:2px;top:0;background:linear-gradient(90deg,transparent,rgba(34,211,238,.5),transparent);filter:blur(.5px);animation:scan 7s linear infinite}
+@keyframes scan{0%{transform:translateY(120px);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(960px);opacity:0}}
+.cover .dot{position:absolute;border-radius:50%;background:var(--cyan);box-shadow:0 0 14px var(--cyan);opacity:.7;animation:floaty 7s ease-in-out infinite}
+.cover .d1{width:10px;height:10px;left:74%;top:62%}.cover .d2{width:6px;height:6px;left:20%;top:26%;background:var(--blue);box-shadow:0 0 12px var(--blue);animation-delay:1.4s}.cover .d3{width:8px;height:8px;left:88%;top:36%;animation-delay:2.2s}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-22px)}}
+.brandrow{display:flex;align-items:center;gap:20px;margin-bottom:42px}
+.logo{width:78px;height:78px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(140deg,#4f8cff,#2563eb);box-shadow:0 14px 40px rgba(37,99,235,.5),inset 0 1px 0 rgba(255,255,255,.4)}
+.logo svg{width:44px;height:44px}
+.brandrow .meta{font-family:var(--font-display);font-weight:600;letter-spacing:.30em;text-transform:uppercase;font-size:20px;color:var(--cyan)}
+.brandrow .meta small{display:block;letter-spacing:.16em;color:var(--muted);font-size:15px;margin-top:6px;font-weight:400}
+.cover h1{font-family:var(--font-display);font-weight:700;font-size:236px;line-height:.9;margin:0;letter-spacing:-3px;
+  background:linear-gradient(100deg,#ffffff 0%,#8fc2ff 44%,#22d3ee 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 60px rgba(34,211,238,.18)}
+.cover .csub{font-size:42px;font-weight:400;color:#c5d4f2;margin:30px 0 0;max-width:1180px}
+.cover .csub b{font-weight:600;color:#fff}
+.cover .rule{height:2px;width:560px;margin:54px 0 30px;background:linear-gradient(90deg,var(--blue),var(--cyan),transparent)}
+.cover .foot{display:flex;gap:44px;font-family:var(--font-mono);font-size:21px;letter-spacing:.03em;color:var(--muted)}
+.cover .foot b{color:var(--cyan)}
+.tag-pill{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;font-family:var(--font-mono);font-size:17px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(84,207,230,.4);border-radius:999px;padding:8px 18px;margin-bottom:30px;background:rgba(84,207,230,.05)}
+.tag-pill::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+/* Tarjeta QR (slide de cierre) — QR generado offline en canvas */
+.qrcard{flex:none;width:480px;background:linear-gradient(160deg,var(--panel),var(--panel3));border:1px solid var(--line);border-radius:24px;padding:38px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.qrlabel{font-family:var(--font-mono);font-size:18px;letter-spacing:.04em;color:var(--cyan);margin-bottom:22px}
+.qrbox{background:#fff;border-radius:18px;padding:20px;display:inline-block;line-height:0;box-shadow:0 0 40px rgba(34,211,238,.20)}
+.qrbox canvas{width:300px;height:300px;display:block;image-rendering:pixelated}
+.qrurl{display:block;margin-top:22px;font-family:var(--font-mono);font-size:19px;color:#cfe0f5;text-decoration:none;word-break:break-all;line-height:1.4}
+.qrurl:hover{color:var(--cyan)}
+.qrhint{font-family:var(--font-display);font-size:15px;color:var(--muted);margin-top:8px}
+
+/* ===========================================================
+   7. EQUIPO
+   =========================================================== */
+.team{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:6px}
+.member{display:flex;flex-direction:column;align-items:center;text-align:center;gap:0;background:linear-gradient(160deg,var(--panel),var(--panel3));border:1px solid var(--line);border-radius:20px;padding:28px 24px 26px}
+.member .av{width:128px;height:128px;border-radius:50%;flex:none;overflow:hidden;margin-bottom:18px;display:grid;place-items:center;font-family:var(--font-mega);font-weight:800;font-size:52px;color:#dff;background:linear-gradient(150deg,rgba(59,130,246,.35),rgba(34,211,238,.22));box-shadow:0 0 0 3px rgba(34,211,238,.32),0 16px 34px rgba(0,0,0,.5)}
+.member .av img{width:100%;height:100%;object-fit:cover;object-position:center 28%;display:block}
+.member .nm{font-family:var(--font-display);font-weight:600;font-size:27px;color:#fff;line-height:1.15}
+.member .ro{font-family:var(--font-mono);font-size:17px;color:var(--cyan2);margin-top:8px}
+
+/* ===========================================================
+   8. STACK TECNOLÓGICO (capas)
+   =========================================================== */
+.stack{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.layer{display:grid;grid-template-columns:300px 1fr auto;align-items:center;gap:28px;background:linear-gradient(100deg,var(--panel),var(--panel3));border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:14px;padding:16px 30px}
+.layer.bridge{border-left-color:var(--cyan);background:linear-gradient(100deg,rgba(34,211,238,.12),var(--panel3))}
+.layer .tech{font-family:var(--font-display);font-weight:700;font-size:30px;color:#fff}
+.layer .tech small{display:block;font-family:var(--font-mono);font-size:15px;font-weight:400;color:var(--cyan2);margin-top:5px;letter-spacing:.04em}
+.layer .role{font-size:21px;color:var(--muted)}
+.layer .badge{font-family:var(--font-mono);font-size:15px;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;white-space:nowrap}
+
+/* ===========================================================
+   9. BLUEPRINT — entidades / diccionario / esquema
+   =========================================================== */
+.entity{width:100%;background:rgba(7,32,54,.78);border:2px solid rgba(84,207,230,.5);border-radius:12px;font-family:var(--font-mono);box-shadow:0 26px 70px rgba(0,0,0,.5);overflow:hidden}
+.entity h4{margin:0;background:linear-gradient(90deg,#0e3a5e,#10456e);color:#eaffff;font-size:22px;font-weight:700;padding:15px 22px;border-bottom:2px solid rgba(84,207,230,.4);letter-spacing:.05em;display:flex;justify-content:space-between;align-items:center}
+.entity h4 .t{font-size:14px;color:var(--cyan2);font-weight:500}
+.entity .row{display:flex;justify-content:space-between;padding:12px 22px;font-size:18px;color:#bfe2f4;border-bottom:1px solid rgba(120,190,235,.12)}
+.entity .row:last-child{border-bottom:0}
+.entity .row .k{color:var(--cyan2)} .entity .row .ty{color:var(--dim)} .entity .pk{color:var(--gold)} .entity .fk{color:#a9c4ff}
+.tablestrip{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.tnode{font-family:var(--font-mono);font-size:17px;color:#bfe2f4;border:1px solid rgba(120,190,235,.3);background:rgba(120,190,235,.05);border-radius:8px;padding:8px 14px}
+.tnode.hl{color:#04121f;background:var(--cyan2);border-color:var(--cyan2);font-weight:700}
+.connector{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--cyan2);font-family:var(--font-mono);font-size:14px}
+.connector .arr{font-size:26px;line-height:1}
+
+/* Código */
+.code{background:#061226;border:1px solid rgba(84,207,230,.28);border-radius:14px;font-family:var(--font-mono);overflow:hidden;box-shadow:0 26px 70px rgba(0,0,0,.45)}
+.code .bar{display:flex;align-items:center;gap:8px;padding:13px 18px;background:rgba(84,207,230,.06);border-bottom:1px solid rgba(84,207,230,.18)}
+.code .bar i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.code .bar .fn{margin-left:14px;font-size:15px;color:var(--dim)}
+.code pre{margin:0;padding:24px 26px;font-size:20px;line-height:1.62;color:#cfe3f7;white-space:pre;overflow:auto}
+.code .kw{color:#7aa2ff} .code .fnname{color:#54cfe6} .code .str{color:#7ee0a8} .code .cm{color:#5d709a;font-style:italic} .code .var{color:#ffd27a} .code .num{color:#ffb020}
+
+/* Flujo (gate de aprobación) */
+.flow{display:flex;align-items:center;gap:22px;margin-top:6px}
+.fbox{flex:1;text-align:center;background:linear-gradient(160deg,var(--panel),var(--panel3));border:1px solid var(--line);border-radius:14px;padding:26px 20px}
+.fbox .t{font-family:var(--font-display);font-weight:600;font-size:24px;color:#fff}
+.fbox .s{font-family:var(--font-mono);font-size:16px;color:var(--muted);margin-top:8px}
+.fbox.ok{border-color:rgba(52,211,153,.5);background:linear-gradient(160deg,rgba(52,211,153,.12),var(--panel3))}
+.fbox.no{border-color:rgba(248,113,113,.5);background:linear-gradient(160deg,rgba(248,113,113,.12),var(--panel3))}
+.farr{color:var(--cyan);font-size:34px;flex:none}
+
+/* ===========================================================
+   10. MODELO HÍBRIDO (dos columnas)
+   =========================================================== */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:8px}
+.dcol{background:linear-gradient(160deg,var(--panel),var(--panel3));border:1px solid var(--line);border-radius:18px;padding:32px 34px}
+.dcol .h{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.dcol .h .lab{font-family:var(--font-mono);font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+.dcol .h h3{font-family:var(--font-display);font-weight:700;font-size:34px;color:#fff}
+.dcol p{font-size:21px;color:var(--muted);line-height:1.5;margin-bottom:18px}
+.dcol .meta{font-family:var(--font-mono);font-size:17px;color:var(--cyan2)}
+.timelist{display:flex;flex-direction:column;gap:10px}
+.trow{display:flex;align-items:center;justify-content:space-between;background:rgba(120,160,255,.05);border:1px solid var(--line);border-radius:10px;padding:13px 18px;font-family:var(--font-mono);font-size:19px}
+.trow .best{color:var(--green);font-weight:700}
+.trow.win{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.08)}
+
+/* mini bracket */
+.mbr{width:100%}
+.mbr path{stroke:rgba(150,210,235,.4);stroke-width:2.5;fill:none}
+.mbr .live path{stroke:var(--cyan);stroke-width:3;filter:drop-shadow(0 0 6px rgba(34,211,238,.7))}
+.mbr rect{fill:rgba(7,23,48,.9);stroke:rgba(120,150,200,.5);stroke-width:2}
+.mbr rect.w{stroke:var(--cyan);stroke-width:3}
+.mbr text{fill:#cfe3f7;font-family:var(--font-mono);font-size:15px}
+
+/* ===========================================================
+   11. DEMO — marco de navegador con captura
+   =========================================================== */
+.browser{border-radius:16px;overflow:hidden;border:1px solid rgba(120,160,255,.22);box-shadow:0 30px 90px rgba(0,0,0,.55);background:#0b1326}
+.browser .top{display:flex;align-items:center;gap:9px;padding:14px 18px;background:#0e1830;border-bottom:1px solid rgba(120,160,255,.14)}
+.browser .top i{width:13px;height:13px;border-radius:50%;display:inline-block}
+.browser .url{margin-left:16px;flex:1;font-family:var(--font-mono);font-size:16px;color:var(--muted);background:#060c1c;border:1px solid var(--line);border-radius:8px;padding:7px 16px}
+.browser img{display:block;width:100%;height:auto}
+.demo-grid{display:grid;grid-template-columns:1.18fr .82fr;gap:54px;align-items:center;margin-top:10px}
+.demo-feats{display:flex;flex-direction:column;gap:20px}
+.feat{display:flex;gap:18px;align-items:flex-start}
+.feat .b{width:42px;height:42px;flex:none;border-radius:11px;display:grid;place-items:center;background:rgba(34,211,238,.12);border:1px solid rgba(84,207,230,.3);color:var(--cyan);font-family:var(--font-mega);font-weight:800;font-size:22px}
+.feat .tt{font-family:var(--font-display);font-weight:600;font-size:25px;color:#fff}
+.feat .dd{font-size:20px;color:var(--muted);margin-top:5px;line-height:1.4}
+
+/* ===========================================================
+   12. STAT GRANDE (QA)
+   =========================================================== */
+.bignum{font-family:var(--font-mega);font-weight:900;font-size:230px;line-height:.84;letter-spacing:-2px;
+  background:linear-gradient(120deg,#fff,#8fc2ff 50%,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
+.statrow{display:flex;gap:48px;margin-top:8px}
+.statrow .it{font-family:var(--font-display)}
+.statrow .it .v{font-size:54px;font-weight:700;color:#fff}
+.statrow .it .l{font-size:19px;color:var(--muted);font-family:var(--font-mono)}
+/* pirámide */
+.pyramid{display:flex;flex-direction:column;align-items:center;gap:10px}
+.plvl{height:74px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-family:var(--font-display);font-weight:600;font-size:22px;color:#04121f;position:relative}
+.plvl .meta{position:absolute;right:-220px;width:200px;text-align:left;color:var(--muted);font-family:var(--font-mono);font-size:16px}
+.p1{width:340px;background:linear-gradient(90deg,#22d3ee,#54cfe6)}
+.p2{width:520px;background:linear-gradient(90deg,#3b82f6,#4f8cff);color:#eaf2ff}
+.p3{width:700px;background:linear-gradient(90deg,#1e3a8a,#2563eb);color:#eaf2ff}
+.p4{width:880px;background:linear-gradient(90deg,#0e1d44,#1b2f63);color:#bfd0f0;border:1px solid var(--line)}
+
+/* ===========================================================
+   13. KANBAN
+   =========================================================== */
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:8px}
+.kcol{background:rgba(120,160,255,.04);border:1px solid var(--line);border-radius:14px;padding:14px}
+.kcol .ch{display:flex;justify-content:space-between;align-items:center;font-family:var(--font-display);font-weight:600;font-size:21px;color:#fff;padding:6px 6px 14px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.kcol .ch .wip{font-family:var(--font-mono);font-size:13px;color:var(--dim);background:rgba(120,160,255,.08);padding:3px 9px;border-radius:6px}
+.kcard{background:linear-gradient(160deg,var(--panel),var(--panel3));border:1px solid var(--line);border-radius:9px;padding:12px 14px;font-size:16px;color:#cfe0f5;margin-bottom:10px;border-left:3px solid var(--blue)}
+.kcol.done .kcard{border-left-color:var(--green)}
+.kcol.backlog .kcard{border-left-color:var(--amber)}
+.kcol .ch.done{color:var(--green)} .kcol .ch.prog{color:var(--cyan)}
+
+/* ===========================================================
+   14. ROADMAP / TIMELINE
+   =========================================================== */
+.road{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:14px}
+.phase{background:linear-gradient(160deg,var(--panel),var(--panel3));border:1px solid var(--line);border-radius:18px;padding:32px 30px;position:relative}
+.phase .num{font-family:var(--font-mega);font-weight:800;font-size:30px;color:var(--cyan);margin-bottom:14px}
+.phase h3{font-family:var(--font-display);font-weight:600;font-size:27px;color:#fff;margin-bottom:10px}
+.phase p{font-size:20px;color:var(--muted);line-height:1.45}
+.phase .st{position:absolute;top:26px;right:28px;font-family:var(--font-mono);font-size:15px;padding:5px 12px;border-radius:999px}
+.phase.done{border-color:rgba(52,211,153,.4)} .phase.done .st{color:var(--green);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.35)}
+.phase.next{border-color:rgba(255,176,32,.4)} .phase.next .st{color:var(--amber);background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.35)}
+.phase.next{box-shadow:0 0 0 1px rgba(255,176,32,.15),0 24px 60px rgba(0,0,0,.4)}
+
+/* ===========================================================
+   15. CHROME del deck (progreso, contador, controles, edición)
+   =========================================================== */
+.progress{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--blue),var(--cyan));z-index:1000;transition:width .4s var(--ease);box-shadow:0 0 12px rgba(34,211,238,.6)}
+.counter{position:fixed;right:26px;bottom:24px;z-index:1000;font-family:var(--font-mono);font-size:16px;color:var(--muted);background:rgba(10,16,36,.7);border:1px solid var(--line);border-radius:999px;padding:8px 16px;backdrop-filter:blur(8px)}
+.counter b{color:var(--cyan)}
+.deck-controls{display:flex;gap:10px}
+.deck-controls button{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:rgba(10,16,36,.75);color:var(--ink);font-size:20px;cursor:pointer;backdrop-filter:blur(8px);transition:.2s}
+.deck-controls button:hover{background:rgba(34,211,238,.16);border-color:rgba(34,211,238,.4)}
+.hint{position:fixed;left:26px;bottom:24px;z-index:1000;font-family:var(--font-mono);font-size:14px;color:var(--dim)}
+.edit-hotzone{position:fixed;top:0;left:0;width:80px;height:80px;z-index:10000;cursor:pointer}
+.edit-toggle{position:fixed;top:16px;left:16px;width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:rgba(10,16,36,.85);font-size:20px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .3s;z-index:10001}
+.edit-toggle.show,.edit-toggle.active{opacity:1;pointer-events:auto}
+.edit-toggle.active{background:var(--cyan);border-color:var(--cyan)}
+[contenteditable=true]{outline:2px dashed rgba(34,211,238,.6);outline-offset:4px;border-radius:4px;cursor:text}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="edit-hotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Modo edición (E)">✏️</button>
+
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+  <!-- ============ 1 · PORTADA ============ -->
+  <section class="slide active">
+    <div class="grid"></div>
+    <div class="cover">
+      <div class="scan"></div>
+      <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
+      <div class="brandrow reveal r1">
+        <div class="logo"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="7" width="16" height="12" rx="3" fill="#fff"/><circle cx="9" cy="13" r="1.6" fill="#2563eb"/><circle cx="15" cy="13" r="1.6" fill="#2563eb"/><rect x="11" y="2.5" width="2" height="4" rx="1" fill="#fff"/><circle cx="12" cy="2.3" r="1.7" fill="#fff"/></svg></div>
+        <div class="meta">Administración de Base de Datos<small>Tecnológico de Estudios Superiores de Chalco · Ing. en Sistemas Computacionales</small></div>
+      </div>
+      <h1 class="reveal r2">RoboLeague</h1>
+      <p class="csub reveal r3">Gestor integral de competencias de robótica — <b>diseño y operación de su base de datos relacional</b></p>
+      <div class="rule reveal r4"></div>
+      <div class="foot reveal r5"><span>RDBMS · <b>PostgreSQL</b></span><span>Normalización <b>3FN</b></span><span>Monolito híbrido <b>Laravel · React</b></span></div>
+    </div>
+  </section>
+
+  <!-- ============ 2 · EQUIPO ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">·</span> El equipo<span class="ln"></span></div>
+      <h2 class="stitle reveal r1">Seis roles, un <span class="c">flujo continuo</span></h2>
+      <p class="ssub reveal r2">Equipo organizado bajo Kanban: cada integrante custodia una capa del monolito y la Definición de Hecho antes de fusionar a <b>main</b>.</p>
+      <div class="team" style="margin-top:30px">
+        <div class="member reveal r2"><div class="av" data-slug="daniel" data-initials="DA">DA</div><div><div class="nm">Daniel Arellano</div><div class="ro">Líder Técnico e Integración</div></div></div>
+        <div class="member reveal r3"><div class="av" data-slug="miguel" data-initials="MJ">MJ</div><div><div class="nm">Miguel Á. Jurado</div><div class="ro">Backend &amp; Base de Datos</div></div></div>
+        <div class="member reveal r4"><div class="av" data-slug="esteban" data-initials="JA">JA</div><div><div class="nm">Juan E. Anzures</div><div class="ro">Frontend &amp; UI Designer</div></div></div>
+        <div class="member reveal r4"><div class="av" data-slug="ian" data-initials="IF">IF</div><div><div class="nm">Ian A. Flores</div><div class="ro">Garante de Calidad (QA)</div></div></div>
+        <div class="member reveal r5"><div class="av" data-slug="brayan" data-initials="BV">BV</div><div><div class="nm">Brayan U. Villegas</div><div class="ro">DevOps e Infraestructura</div></div></div>
+        <div class="member reveal r6"><div class="av" data-slug="fernando" data-initials="JR">JR</div><div><div class="nm">Juan F. Reyes</div><div class="ro">Gestión y Documentación</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3 · PROBLEMÁTICA ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">01</span> El problema<span class="ln"></span></div>
+      <h2 class="stitle reveal r1">Gestionar un torneo <span class="c">a mano</span> es frágil</h2>
+      <p class="ssub reveal r2">Las hojas de cálculo dispersas no soportan la naturaleza dinámica y multifuncional de la robótica competitiva. Cuatro dolores operativos lo justifican:</p>
+      <div class="team" style="grid-template-columns:repeat(4,1fr);margin-top:40px">
+        <div class="card reveal r3"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><h3>Caja dinámica</h3><p>Preventa, fase regular y cobro tardío: tarifas que cambian por fecha y convenio.</p></div>
+        <div class="card reveal r4"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div><h3>Identidad flexible</h3><p>Un piloto, varios robots; un robot, varias modalidades. Los sistemas rígidos duplican entidades.</p></div>
+        <div class="card reveal r5"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.5 8-8 11-4.5-3-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>Seguridad técnica</h3><p>Peso, dimensiones y voltaje estrictos. Sin checklist auditable se degrada el torneo.</p></div>
+        <div class="card reveal r6"><div class="ic"><svg viewBox="0 0 24 24"><path d="M6 3v6a3 3 0 0 0 3 3h6a3 3 0 0 1 3 3v3M6 21V3M18 21v-3"/><circle cx="6" cy="3" r="1.6" fill="currentColor" stroke="none"/></svg></div><h3>Evaluación heterogénea</h3><p>Unas categorías son brackets de combate; otras, el mejor tiempo de varios intentos.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4 · SOLUCIÓN / OBJETIVO ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad" style="justify-content:center">
+      <div class="sectab reveal r1"><span class="n">02</span> La solución<span class="ln"></span></div>
+      <h2 class="stitle reveal r1" style="font-size:88px;max-width:1500px">Un <span class="c">motor de base de datos</span> que automatiza lo que hoy se hace a mano.</h2>
+      <p class="ssub reveal r2" style="font-size:32px">RDBMS relacional, normalizado y autónomo: integridad garantizada, reglas de negocio forzadas por software y resultados en tiempo real para esquemas de evaluación híbridos.</p>
+      <div class="team" style="grid-template-columns:repeat(3,1fr);margin-top:52px">
+        <div class="card reveal r3" style="text-align:center"><h3 style="color:var(--cyan);font-family:var(--font-mega);font-weight:800;font-size:30px">CAJA</h3><p>Control financiero absoluto con tarifas paramétricas por fecha.</p></div>
+        <div class="card reveal r4" style="text-align:center"><h3 style="color:var(--cyan);font-family:var(--font-mega);font-weight:800;font-size:30px">PISTA</h3><p>Excelencia operativa: ningún robot no aprobado compite.</p></div>
+        <div class="card reveal r5" style="text-align:center"><h3 style="color:var(--cyan);font-family:var(--font-mega);font-weight:800;font-size:30px">RESULTADOS</h3><p>Transparencia: posiciones, brackets y podio al instante.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5 · ALCANCE ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">02</span> La solución · Alcance<span class="ln"></span></div>
+      <h2 class="stitle reveal r1">Nace y muere <span class="c">con el evento</span></h2>
+      <div class="duo" style="margin-top:36px">
+        <div class="dcol reveal r2">
+          <div class="h"><span class="lab" style="color:var(--green)">✓ Dentro del alcance</span></div>
+          <div class="timelist">
+            <div class="trow">Participantes e instituciones · roles</div>
+            <div class="trow">Financiero · tarifas dinámicas e inscripciones</div>
+            <div class="trow">Inspección técnica (checklist)</div>
+            <div class="trow">Competencia híbrida · brackets y tiempos</div>
+            <div class="trow">Modo Proyección público (sin auth)</div>
+            <div class="trow">Dashboards por rol y reportes de caja</div>
+          </div>
+        </div>
+        <div class="dcol reveal r3" style="opacity:.92">
+          <div class="h"><span class="lab" style="color:var(--dim)">✗ Fuera de alcance</span></div>
+          <div class="timelist">
+            <div class="trow" style="color:var(--dim)">Ranking global / histórico inter-torneos</div>
+            <div class="trow" style="color:var(--dim)">Pasarela de pago bancaria automática</div>
+            <div class="trow" style="color:var(--dim)">Cronometraje 100% por hardware (Fase 3)</div>
+          </div>
+          <p style="margin-top:24px">Decisión <b style="color:var(--cyan2)">Lean</b>: eliminar el inventario muerto mantiene la BD ligera y el torneo resiliente aunque falle el internet del recinto.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6 · STACK ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">02</span> La solución · Arquitectura<span class="ln"></span></div>
+      <h2 class="stitle reveal r1" style="font-size:64px">Monolito híbrido moderno</h2>
+      <p class="ssub reveal r2" style="font-size:27px;margin-top:14px">Un solo repositorio une backend y frontend mediante un puente bidireccional: <b>sin API REST separada que duplique el desarrollo</b>.</p>
+      <div class="stack" style="margin-top:24px">
+        <div class="layer reveal r3"><div class="tech">PostgreSQL<small>3FN · triggers · ACID</small></div><div class="role">Persistencia e integridad relacional rígida.</div><div class="badge">Datos</div></div>
+        <div class="layer reveal r4"><div class="tech">Laravel 13 · PHP 8.4<small>Eloquent · Fortify · migraciones</small></div><div class="role">Reglas de negocio, autenticación y ruteo seguro.</div><div class="badge">Backend</div></div>
+        <div class="layer bridge reveal r5"><div class="tech" style="color:var(--cyan)">Inertia.js v3<small>props directas a React</small></div><div class="role">El puente: conecta backend y frontend sin API aparte.</div><div class="badge" style="color:var(--cyan2)">Conector</div></div>
+        <div class="layer reveal r6"><div class="tech">React 19 · Tailwind v4<small>tema “Eléctrico” · Vite/HMR</small></div><div class="role">Interfaces reactivas: dashboards, captura y proyección.</div><div class="badge">Frontend</div></div>
+        <div class="layer reveal r7" style="border-left-style:dashed;opacity:.8"><div class="tech">REST API · ESP32<small>JSON · Fase 3 pendiente</small></div><div class="role">Ingesta de tiempos por telemetría de hardware.</div><div class="badge">Hardware</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7 · DIVIDER: BASE DE DATOS (blueprint) ============ -->
+  <section class="slide blueprint">
+    <div class="grid"></div>
+    <div class="crop tl"></div><div class="crop tr"></div><div class="crop bl"></div><div class="crop br"></div>
+    <div class="pad" style="justify-content:center">
+      <div class="reveal r1" style="font-family:var(--font-mono);color:var(--cyan2);font-size:22px;letter-spacing:.1em;margin-bottom:10px">// sección 03 — el corazón del proyecto</div>
+      <div class="reveal r1" style="font-family:var(--font-mega);font-weight:900;font-size:300px;line-height:.82;color:#eaffff;letter-spacing:-3px">03</div>
+      <h2 class="reveal r2" style="font-family:var(--font-display);font-weight:700;font-size:84px;color:#eaffff;margin-top:-6px">La base de datos</h2>
+      <p class="reveal r3" style="font-family:var(--font-display);font-size:32px;color:#a9cbe4;margin-top:14px">Tercera Forma Normal · PostgreSQL · integridad forzada por triggers</p>
+      <div class="chips reveal r4" style="margin-top:34px"><span class="chip">3FN</span><span class="chip">~12 entidades</span><span class="chip">triggers nativos</span><span class="chip">vistas materializadas</span><span class="chip">ACID</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 8 · DISEÑO BD / DESACOPLAMIENTO ============ -->
+  <section class="slide blueprint">
+    <div class="grid"></div>
+    <div class="crop tl"></div><div class="crop br"></div>
+    <div class="pad">
+      <div class="sectab reveal r1" style="color:var(--cyan2)"><span class="n">03</span> La base de datos<span class="ln"></span></div>
+      <h2 class="stitle reveal r1" style="color:#eaffff">Desacoplar <span class="c">Pilotos · Clubes · Robots</span></h2>
+      <p class="ssub reveal r2" style="color:#a9cbe4">Separar los actores elimina la redundancia (anomalía de Codd): un piloto se registra una vez y conduce varios robots; un robot cambia de piloto sin tocar su registro técnico.</p>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:22px;margin-top:40px">
+        <div class="entity reveal r3">
+          <h4>Usuarios <span class="t">piloto / juez / coach</span></h4>
+          <div class="row"><span class="k pk">id_usuario</span><span class="ty">serial · PK</span></div>
+          <div class="row"><span class="k">correo</span><span class="ty">unique</span></div>
+          <div class="row"><span class="k">rol</span><span class="ty">varchar</span></div>
+        </div>
+        <div class="connector reveal r4"><span class="arr">→</span>1:N</div>
+        <div class="entity reveal r4" style="border-color:var(--cyan2)">
+          <h4>Robots <span class="t">el autómata</span></h4>
+          <div class="row"><span class="k pk">id_robot</span><span class="ty">serial · PK</span></div>
+          <div class="row"><span class="k fk">id_piloto</span><span class="ty">FK → Usuarios</span></div>
+          <div class="row"><span class="k fk">id_categoria</span><span class="ty">FK → Categorias</span></div>
+        </div>
+        <div class="connector reveal r5"><span class="arr">→</span>1:N</div>
+        <div class="entity reveal r5">
+          <h4>Inscripciones <span class="t">paga y compite</span></h4>
+          <div class="row"><span class="k pk">id_inscripcion</span><span class="ty">serial · PK</span></div>
+          <div class="row"><span class="k fk">id_robot</span><span class="ty">FK · cascade</span></div>
+          <div class="row"><span class="k">estado_pago</span><span class="ty">varchar</span></div>
+        </div>
+      </div>
+      <div class="tablestrip reveal r6" style="margin-top:40px">
+        <span class="tnode hl">Instituciones</span><span class="tnode hl">Categorias</span><span class="tnode hl">Usuarios</span><span class="tnode hl">Robots</span><span class="tnode hl">Tarifas</span><span class="tnode hl">Inscripciones</span><span class="tnode">Inspecciones_Checklist</span><span class="tnode">Encuentros</span><span class="tnode">Participantes_Encuentro</span><span class="tnode">Rounds_Encuentro</span><span class="tnode">Amonestaciones</span><span class="tnode">Intentos_Tiempos</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 9 · MODELO HÍBRIDO ============ -->
+  <section class="slide blueprint">
+    <div class="grid"></div>
+    <div class="crop tr"></div><div class="crop bl"></div>
+    <div class="pad">
+      <div class="sectab reveal r1" style="color:var(--cyan2)"><span class="n">03</span> La base de datos · Esquema híbrido<span class="ln"></span></div>
+      <h2 class="stitle reveal r1" style="color:#eaffff">Dos dinámicas opuestas, <span class="c">un solo modelo</span></h2>
+      <div class="duo reveal r2" style="margin-top:34px">
+        <div class="dcol" style="background:rgba(7,32,54,.6)">
+          <div class="h"><span class="lab">tipo_evaluacion = Tiempo</span></div>
+          <h3 style="font-family:var(--font-display);font-weight:700;font-size:34px;color:#fff;margin-bottom:14px">Modelo de tiempos</h3>
+          <p style="color:#a9cbe4">Hasta 3 intentos cronometrados; una función de agregación selecciona el menor tiempo válido.</p>
+          <div class="timelist" style="margin-top:8px">
+            <div class="trow">Intento 1 <span>00:12.480</span></div>
+            <div class="trow win">Intento 2 <span class="best">00:11.905 ◄ mejor</span></div>
+            <div class="trow">Intento 3 <span>00:12.110</span></div>
+          </div>
+          <div class="meta" style="margin-top:16px">SELECT MIN(tiempo_logrado) … GROUP BY id_inscripcion</div>
+        </div>
+        <div class="dcol" style="background:rgba(7,32,54,.6)">
+          <div class="h"><span class="lab">tipo_evaluacion = Combate</span></div>
+          <h3 style="font-family:var(--font-display);font-weight:700;font-size:34px;color:#fff;margin-bottom:14px">Árbol de eliminación</h3>
+          <p style="color:#a9cbe4">Estructura auto-referenciable: <b style="color:var(--cyan2)">id_encuentro_siguiente</b> encadena al ganador hacia la final.</p>
+          <svg class="mbr" viewBox="0 0 560 240" style="margin-top:6px">
+            <rect x="0" y="20" width="150" height="40" rx="6"/><text x="14" y="45">Sierra</text>
+            <rect x="0" y="80" width="150" height="40" rx="6"/><text x="14" y="105">Tanque</text>
+            <rect x="0" y="160" width="150" height="40" rx="6"/><text x="14" y="185">Pinza</text>
+            <rect x="0" y="200" width="150" height="40" rx="2"/><text x="14" y="225">Rayo</text>
+            <path d="M150 40 H200 V100 H150 M150 100 H150"/><path d="M150 180 H200 V220 H150"/>
+            <g class="live"><path d="M200 70 H260 V130 H310"/></g><path d="M200 200 H260 V130"/>
+            <rect class="w" x="310" y="110" width="160" height="40" rx="6"/><text x="324" y="135" fill="#54cfe6">Sierra ▶ Final</text>
+          </svg>
+          <div class="meta" style="margin-top:8px">+ encuentro por 3.er lugar y podio automáticos</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 10 · INTEGRIDAD / TRIGGERS ============ -->
+  <section class="slide blueprint">
+    <div class="grid"></div>
+    <div class="crop tl"></div><div class="crop br"></div>
+    <div class="pad">
+      <div class="sectab reveal r1" style="color:var(--cyan2)"><span class="n">03</span> La base de datos · Integridad<span class="ln"></span></div>
+      <h2 class="stitle reveal r1" style="color:#eaffff">La BD es el <span class="c">primer filtro de seguridad</span></h2>
+      <p class="ssub reveal r2" style="color:#a9cbe4">Un trigger <b>BEFORE INSERT</b> bloquea —de forma inviolable— a cualquier robot que no esté “Aprobado” en la inspección. La regla vive en los datos, no solo en la app.</p>
+      <div class="flow reveal r3" style="margin-top:36px">
+        <div class="fbox"><div class="t">Inspección</div><div class="s">peso · dimensiones · electrónica</div></div>
+        <span class="farr">→</span>
+        <div class="fbox ok"><div class="t" style="color:var(--green)">✓ Aprobado</div><div class="s">entra al bracket / registra tiempos</div></div>
+        <span class="farr">→</span>
+        <div class="fbox no"><div class="t" style="color:var(--red)">✗ Reprobado</div><div class="s">INSERT rechazado por la BD</div></div>
+      </div>
+      <div class="code reveal r4" style="margin-top:34px">
+        <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="fn">triggers/exigir_aprobado.sql</span></div>
+<pre><span class="kw">CREATE TRIGGER</span> chk_aprobado <span class="kw">BEFORE INSERT</span> <span class="kw">ON</span> participantes_encuentro
+  <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> <span class="fnname">exigir_aprobado</span>();
+<span class="cm">-- ↳ si la inscripción no tiene un checklist 'Aprobado', RAISE EXCEPTION</span>
+<span class="cm">--   ningún emparejamiento ni tiempo se guarda. Equidad garantizada.</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 11 · REGLAS EN PISTA ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">03</span> Reglas de negocio en código<span class="ln"></span></div>
+      <h2 class="stitle reveal r1">Combate al <span class="c">mejor de tres</span></h2>
+      <div class="demo-grid reveal r2" style="grid-template-columns:1.25fr .75fr;margin-top:30px">
+        <div class="code">
+          <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="fn">app/Services/BracketService.php</span></div>
+<pre><span class="kw">public function</span> <span class="fnname">registrarRound</span>(Encuentro <span class="var">$e</span>, ?<span class="kw">int</span> <span class="var">$ganador</span>, <span class="kw">bool</span> <span class="var">$repetido</span>=<span class="kw">false</span>): <span class="kw">void</span>
+{
+    <span class="var">$e</span>->rounds()-><span class="fnname">create</span>([...]);
+    <span class="kw">if</span> (<span class="var">$repetido</span> || <span class="var">$ganador</span> === <span class="kw">null</span>) <span class="kw">return</span>;  <span class="cm">// empate: no cuenta</span>
+
+    <span class="var">$victorias</span> = <span class="var">$e</span>->rounds()
+        -><span class="fnname">where</span>(<span class="str">'id_inscripcion_ganador'</span>, <span class="var">$ganador</span>)-><span class="fnname">count</span>();
+
+    <span class="kw">if</span> (<span class="var">$victorias</span> >= <span class="num">2</span>) {
+        <span class="var">$this</span>-><span class="fnname">decidirEncuentro</span>(<span class="var">$e</span>, <span class="var">$ganador</span>, <span class="str">'Rounds'</span>); <span class="cm">// gana el duelo</span>
+    }
+}</pre>
+        </div>
+        <div class="demo-feats">
+          <div class="feat reveal r3"><div class="b">3</div><div><div class="tt">Mejor de tres</div><div class="dd">Round repetido por empate que no contabiliza.</div></div></div>
+          <div class="feat reveal r4"><div class="b">!</div><div><div class="tt">Amonestaciones</div><div class="dd">Bitácora de faltas por encuentro y por juez.</div></div></div>
+          <div class="feat reveal r5"><div class="b">⏱</div><div><div class="tt">Reparación pausable</div><div class="dd">Saldo de 300 s que conserva el tiempo entre pausas.</div></div></div>
+          <div class="feat reveal r6"><div class="b">▲</div><div><div class="tt">Podio automático</div><div class="dd">Default, descalificación y 3.er lugar resueltos.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 12 · DEMO DASHBOARD ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">04</span> En acción · Demo<span class="ln"></span></div>
+      <h2 class="stitle reveal r1">Dashboard <span class="c">por rol</span></h2>
+      <div class="demo-grid reveal r2">
+        <div class="browser reveal rs r2">
+          <div class="top"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="url">roboleague.test/dashboard</span></div>
+          <img src="img/captura_dashboard.png" alt="Dashboard de RoboLeague con indicadores y accesos rápidos">
+        </div>
+        <div class="demo-feats">
+          <div class="feat reveal r3"><div class="b">◆</div><div><div class="tt">Indicadores en vivo</div><div class="dd">Robots inscritos, pagos, inspecciones y total recaudado.</div></div></div>
+          <div class="feat reveal r4"><div class="b">↗</div><div><div class="tt">Accesos rápidos</div><div class="dd">Inscribir robot, reportes/caja y combate a un clic.</div></div></div>
+          <div class="feat reveal r5"><div class="b">!</div><div><div class="tt">“Qué atender”</div><div class="dd">Inertia renderiza solo lo que corresponde a tu rol.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 13 · DEMO INSCRIPCIONES ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">04</span> En acción · Demo<span class="ln"></span></div>
+      <h2 class="stitle reveal r1">Catálogos con <span class="c">tabla de datos</span></h2>
+      <div class="demo-grid reveal r2">
+        <div class="browser reveal rs r2">
+          <div class="top"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="url">roboleague.test/inscripciones</span></div>
+          <img src="img/captura_inscripciones.png" alt="Catálogo de inscripciones con búsqueda, filtros y paginación">
+        </div>
+        <div class="demo-feats">
+          <div class="feat reveal r3"><div class="b">⌕</div><div><div class="tt">Búsqueda incremental</div><div class="dd">Robot, piloto o categoría con ILIKE en una sola consulta.</div></div></div>
+          <div class="feat reveal r4"><div class="b">⇅</div><div><div class="tt">Orden y filtros</div><div class="dd">Por estado y categoría, columnas ordenables seguras.</div></div></div>
+          <div class="feat reveal r5"><div class="b">‹›</div><div><div class="tt">Paginación servidor</div><div class="dd">Inertia v3 recarga solo la lista y preserva la URL.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 14 · DEMO PROYECCIÓN ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">04</span> En acción · Demo<span class="ln"></span></div>
+      <h2 class="stitle reveal r1">Modo Proyección · <span class="c">podio en vivo</span></h2>
+      <div class="demo-grid reveal r2">
+        <div class="browser reveal rs r2">
+          <div class="top"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="url">roboleague.test/proyeccion/mini-sumo</span></div>
+          <img src="img/captura_proyeccion.png" alt="Modo Proyección con el podio de los tres primeros lugares">
+        </div>
+        <div class="demo-feats">
+          <div class="feat reveal r3"><div class="b">⤢</div><div><div class="tt">Vista pública por enlace</div><div class="dd">Sin autenticación, lista para cañón/pantalla del recinto.</div></div></div>
+          <div class="feat reveal r4"><div class="b">↻</div><div><div class="tt">Refresco por polling</div><div class="dd">Bracket, marcador y cronómetro siempre al día.</div></div></div>
+          <div class="feat reveal r5"><div class="b">▲</div><div><div class="tt">Podio automático</div><div class="dd">Los tres primeros al decidirse la final.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 15 · QA / PRUEBAS ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">05</span> Calidad y proceso<span class="ln"></span></div>
+      <div style="display:grid;grid-template-columns:.92fr 1.08fr;gap:60px;align-items:center;flex:1">
+        <div>
+          <div class="bignum reveal r1">184</div>
+          <div class="statrow reveal r2">
+            <div class="it"><div class="v" style="font-size:46px">849</div><div class="l">aserciones</div></div>
+            <div class="it"><div class="v" style="font-size:46px;color:var(--green)">100%</div><div class="l">en verde</div></div>
+            <div class="it"><div class="v" style="font-size:46px">PHPUnit</div><div class="l">feature + integración</div></div>
+          </div>
+          <p class="ssub reveal r3" style="margin-top:30px;max-width:680px">Suite automatizada que es <b>criterio de fusión a main</b>: valida triggers, mejor de tres, reparación pausable y la ruta pública de proyección.</p>
+        </div>
+        <div class="pyramid reveal r3">
+          <div class="plvl p1">E2E · flujo completo<span class="meta">Dusk / Playwright</span></div>
+          <div class="plvl p2">Integración · BD + Inertia<span class="meta">triggers, cascadas, props</span></div>
+          <div class="plvl p3">Unitarias · reglas de negocio<span class="meta">tarifas, rounds, reparación</span></div>
+          <div class="plvl p4">Tipos &amp; build · TypeScript + verificación visual</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 16 · KANBAN ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">05</span> Calidad y proceso · Metodología<span class="ln"></span></div>
+      <h2 class="stitle reveal r1">Flujo continuo con <span class="c">Kanban</span></h2>
+      <p class="ssub reveal r2">Sistema <b>pull</b> con límites WIP y una Definición de Hecho estricta: triggers probados y fusión limpia a <b>main</b> antes de marcar “Done”.</p>
+      <div class="board reveal r3" style="margin-top:30px">
+        <div class="kcol backlog"><div class="ch">Backlog <span class="wip">∞</span></div><div class="kcard">Telemetría ESP32</div><div class="kcard">Pruebas de carga (JMeter)</div><div class="kcard">Runbook de despliegue</div></div>
+        <div class="kcol"><div class="ch">To Do <span class="wip">8</span></div><div class="kcard">Cotejar bibliografía</div><div class="kcard">Pulidos de UI</div></div>
+        <div class="kcol"><div class="ch prog">In Progress <span class="wip">2/dev</span></div><div class="kcard">Tablas · Instituciones</div></div>
+        <div class="kcol"><div class="ch prog">In Review / QA <span class="wip">3</span></div><div class="kcard">Dashboards por rol</div></div>
+        <div class="kcol done"><div class="ch done">Done <span class="wip">∞</span></div><div class="kcard">Esquema 3FN + triggers</div><div class="kcard">Autenticación (Fortify)</div><div class="kcard">Combate por rounds</div><div class="kcard">Modo Proyección</div><div class="kcard">Suite de 184 pruebas</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 17 · ESTADO / ROADMAP ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">05</span> Estado actual y lo que viene<span class="ln"></span></div>
+      <h2 class="stitle reveal r1">Dos fases <span class="c">cerradas</span>, una en el horizonte</h2>
+      <div class="road reveal r2" style="margin-top:10px">
+        <div class="phase done reveal r3"><span class="st">✓ Completa</span><div class="num">Fase 1</div><h3>Cimientos &amp; persistencia</h3><p>BD en 3FN migrada y poblada con seeders; triggers y repositorio listos.</p></div>
+        <div class="phase done reveal r4"><span class="st">✓ Completa</span><div class="num">Fase 2</div><h3>Interfaces &amp; conectividad</h3><p>Auth, catálogos, inspección, combate, tiempos, dashboards y proyección operativos.</p></div>
+        <div class="phase next reveal r5"><span class="st">◷ Pendiente</span><div class="num">Fase 3</div><h3>Telemetría de hardware</h3><p>Microcontroladores ESP32-WROOM-32 enviando tiempos por HTTP/JSON a la API REST.</p></div>
+      </div>
+      <p class="ssub reveal r6" style="margin-top:34px">Hoy la captura de tiempos es por interfaz operada por jueces; la ingesta automatizada por hardware se aborda al cierre del proyecto.</p>
+    </div>
+  </section>
+
+  <!-- ============ 18 · CIERRE ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="cover" style="flex-direction:row;align-items:center;gap:64px;justify-content:space-between">
+      <div class="scan"></div>
+      <span class="dot d1"></span><span class="dot d3"></span>
+      <div style="max-width:1020px">
+        <div class="tag-pill reveal r1">Defensa de proyecto · Gracias</div>
+        <h1 class="reveal r2" style="font-size:172px">RoboLeague</h1>
+        <p class="csub reveal r3" style="max-width:980px;font-size:36px">Una base de datos relacional que convierte la logística manual de un torneo en un <b>motor transaccional en tiempo real</b>.</p>
+        <div class="statrow reveal r4" style="margin-top:38px;gap:46px">
+          <div class="it"><div class="v">3FN</div><div class="l">PostgreSQL</div></div>
+          <div class="it"><div class="v">12</div><div class="l">entidades</div></div>
+          <div class="it"><div class="v" style="color:var(--cyan)">184</div><div class="l">pruebas en verde</div></div>
+          <div class="it"><div class="v">Híbrido</div><div class="l">brackets + tiempos</div></div>
+        </div>
+        <div class="rule reveal r5" style="margin-top:40px"></div>
+        <div class="foot reveal r5"><span>TESCHA · Administración de Base de Datos</span><span>¿Preguntas?</span></div>
+      </div>
+      <div class="qrcard reveal rs r3">
+        <div class="qrlabel">Escanea para abrir la presentación</div>
+        <div class="qrbox"><canvas id="qrCanvas" width="700" height="700"></canvas></div>
+        <a class="qrurl" id="qrUrl" href="#">enlace de la presentación</a>
+        <div class="qrhint">o ábrela desde tu navegador</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<!-- Chrome -->
+<div class="counter" id="counter"><b>01</b> / 18</div>
+<div class="hint">← → · Espacio · E para editar</div>
+<div class="deck-controls"><button id="prevBtn" aria-label="Anterior">‹</button><button id="nextBtn" aria-label="Siguiente">›</button></div>
+
+<script>
+/* ===========================================================
+   CONTROLADOR DE PRESENTACIÓN
+   · Navegación: flechas, espacio, RePág/AvPág, rueda, swipe
+   · Barra de progreso + contador
+   =========================================================== */
+class SlidePresentation{
+  constructor(){
+    this.slides=[...document.querySelectorAll('.slide')];
+    this.i=0;
+    this.stage=document.getElementById('deckStage');
+    this.progress=document.getElementById('progress');
+    this.counter=document.getElementById('counter');
+    this.scaleStage();this.bindNav();this.show(0);
+    addEventListener('resize',()=>this.scaleStage());
+  }
+  scaleStage(){
+    const k=Math.min(innerWidth/1920,innerHeight/1080);
+    const x=(innerWidth-1920*k)/2, y=(innerHeight-1080*k)/2;
+    this.stage.style.transform=`translate(${x}px,${y}px) scale(${k})`;
+  }
+  show(n){
+    this.i=Math.max(0,Math.min(n,this.slides.length-1));
+    this.slides.forEach((s,j)=>{s.classList.toggle('active',j===this.i);s.classList.toggle('visible',j===this.i);});
+    const pct=(this.i/(this.slides.length-1))*100;
+    this.progress.style.width=pct+'%';
+    const p=String(this.i+1).padStart(2,'0');
+    this.counter.innerHTML=`<b>${p}</b> / ${this.slides.length}`;
+  }
+  next(){this.show(this.i+1);} prev(){this.show(this.i-1);}
+  bindNav(){
+    addEventListener('keydown',e=>{
+      if(e.target.getAttribute('contenteditable')==='true')return;
+      if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();this.next();}
+      else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();this.prev();}
+      else if(e.key==='Home'){this.show(0);} else if(e.key==='End'){this.show(this.slides.length-1);}
+    });
+    document.getElementById('nextBtn').onclick=()=>this.next();
+    document.getElementById('prevBtn').onclick=()=>this.prev();
+    let wt=0;addEventListener('wheel',e=>{const now=Date.now();if(now-wt<700)return;if(Math.abs(e.deltaY)<24)return;wt=now;e.deltaY>0?this.next():this.prev();},{passive:true});
+    let sx=0,sy=0;
+    addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+    addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){dx<0?this.next():this.prev();}},{passive:true});
+  }
+}
+const deck=new SlidePresentation();
+
+/* ===========================================================
+   EDICIÓN EN LÍNEA (hotzone esquina sup-izq o tecla E)
+   =========================================================== */
+const editor={
+  isActive:false,
+  toggle(){
+    this.isActive=!this.isActive;
+    const t=document.getElementById('editToggle');
+    t.classList.toggle('active',this.isActive);t.classList.toggle('show',this.isActive);
+    document.querySelectorAll('.slide h1,.slide h2,.slide h3,.slide p,.slide .nm,.slide .ro,.slide .tt,.slide .dd,.slide .role,.slide .card h3,.slide .feat,.slide .trow')
+      .forEach(el=>el.setAttribute('contenteditable',this.isActive));
+  }
+};
+const hot=document.querySelector('.edit-hotzone'),tg=document.getElementById('editToggle');let ht=null;
+hot.addEventListener('mouseenter',()=>{clearTimeout(ht);tg.classList.add('show');});
+hot.addEventListener('mouseleave',()=>{ht=setTimeout(()=>{if(!editor.isActive)tg.classList.remove('show');},400);});
+tg.addEventListener('mouseenter',()=>clearTimeout(ht));
+tg.addEventListener('mouseleave',()=>{ht=setTimeout(()=>{if(!editor.isActive)tg.classList.remove('show');},400);});
+tg.addEventListener('click',()=>editor.toggle());
+hot.addEventListener('click',()=>editor.toggle());
+addEventListener('keydown',e=>{if((e.key==='e'||e.key==='E')&&e.target.getAttribute('contenteditable')!=='true')editor.toggle();});
+</script>
+
+<!-- ====== QR offline: qrcode-generator (MIT, Kazuhiko Arase) inlineado ====== -->
+<script>window.QRGen=(function(){var exports={},module={exports:exports};
+/**
+ * Minified by jsDelivr using Terser v5.37.0.
+ * Original file: /npm/qrcode-generator@1.4.4/qrcode.js
+ *
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
+var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,(function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1}))},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}((function(){return qrcode}));
+
+;return module.exports;})();</script>
+<!-- ====== Render del QR de la presentación ====== -->
+<script>
+/* ============================================================
+   ENLACE DE LA PRESENTACIÓN
+   Edita SOLO la línea de abajo con tu URL pública y recarga:
+   el QR se regenera solo (offline, sin internet al proyectar).
+   ============================================================ */
+window.DECK_URL = "https://roboleague.tlapala.com/";
+
+(function () {
+  var url = window.DECK_URL;
+  var a = document.getElementById('qrUrl');
+  if (a) {
+    a.textContent = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    a.href = url;
+  }
+  var canvas = document.getElementById('qrCanvas');
+  if (canvas && window.QRGen) {
+    try {
+      var qr = window.QRGen(0, 'M');   // tipo automático, corrección media
+      qr.addData(url);
+      qr.make();
+      var n = qr.getModuleCount();
+      var quiet = 4;                   // zona de silencio (margen) para escaneo
+      var total = n + quiet * 2;
+      var px = canvas.width;
+      var cell = px / total;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, px, px);
+      ctx.fillStyle = '#06182b';       // módulos en navy de marca, alto contraste
+      for (var r = 0; r < n; r++) {
+        for (var c = 0; c < n; c++) {
+          if (qr.isDark(r, c)) {
+            ctx.fillRect(Math.floor((c + quiet) * cell), Math.floor((r + quiet) * cell), Math.ceil(cell), Math.ceil(cell));
+          }
+        }
+      }
+    } catch (e) {
+      console.error('QR error:', e);
+    }
+  }
+})();
+
+</script>
+<!-- ====== Fotos de equipo: match por nombre con cualquier extensión ====== -->
+<!-- Pon img/equipo/<slug>.<ext> con slug = daniel/miguel/esteban/ian/brayan/fernando.
+     Extensiones soportadas (se prueban en orden): png, jpg, jpeg, webp, svg.
+     Si no existe ninguna, queda la inicial. -->
+<script>
+(function () {
+  var exts = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
+  document.querySelectorAll('.member .av[data-slug]').forEach(function (av) {
+    var slug = av.getAttribute('data-slug');
+    var i = 0;
+    (function tryNext() {
+      if (i >= exts.length) { return; }          // sin foto: se conservan las iniciales
+      var img = new Image();
+      img.onload = function () {
+        av.textContent = '';
+        img.alt = av.getAttribute('data-initials');
+        av.appendChild(img);
+      };
+      img.onerror = tryNext;
+      img.src = 'img/equipo/' + slug + '.' + exts[i++];
+    })();
+  });
+})();
+</script>
+</body>
+</html>
