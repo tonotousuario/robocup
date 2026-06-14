@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -21,11 +23,16 @@ class DatabaseSeeder extends Seeder
             TarifaSeeder::class,
         ]);
 
-        User::factory()->create([
-            'name' => 'Admin',
-            'apellidos' => 'RoboLeague',
-            'email' => 'admin@roboleague.test',
-            'rol' => 'Administrador',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@roboleague.test'],
+            [
+                'name' => 'Admin',
+                'apellidos' => 'RoboLeague',
+                'rol' => 'Administrador',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+                'remember_token' => Str::random(10),
+            ]
+        );
     }
 }
