@@ -19,7 +19,7 @@ class InstitucionSeeder extends Seeder
         ];
 
         foreach ($instituciones as $institucion) {
-            Institucion::create($institucion);
+            Institucion::firstOrCreate(['nombre' => $institucion['nombre']], $institucion);
         }
     }
 }

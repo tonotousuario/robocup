@@ -20,7 +20,7 @@ class TarifaSeeder extends Seeder
         ];
 
         foreach ($tarifas as $tarifa) {
-            Tarifa::create($tarifa);
+            Tarifa::firstOrCreate(['descripcion' => $tarifa['descripcion']], $tarifa);
         }
     }
 }
