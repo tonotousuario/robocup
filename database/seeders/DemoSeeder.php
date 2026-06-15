@@ -13,6 +13,7 @@ use App\Models\Tarifa;
 use App\Models\User;
 use App\Services\BracketService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * Datos de demostración para la defensa: deja un torneo "a medio jugar".
@@ -40,7 +41,14 @@ class DemoSeeder extends Seeder
 
         $juez = User::firstOrCreate(
             ['email' => 'juez@roboleague.test'],
-            User::factory()->juez()->make(['name' => 'Jueza', 'apellidos' => 'Pista'])->getAttributes(),
+            [
+                'name' => 'Jueza',
+                'apellidos' => 'Pista',
+                'rol' => 'Juez',
+                'telefono' => fake()->phoneNumber(),
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+            ],
         );
 
         $combate = Categoria::where('tipo_evaluacion', 'Combate')->firstOrFail();

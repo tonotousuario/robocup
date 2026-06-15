@@ -33,15 +33,29 @@ base mediante los seeders:
 > ⚠️ `migrate:fresh` **borra todos los datos**. Úsalo solo en local antes de la demo, nunca
 > contra producción.
 
-### Credenciales del administrador
+> 📌 **Son dos comandos.** `migrate:fresh --seed` carga **solo catálogos + admin** (verás en
+> el log únicamente `InstitucionSeeder`, `CategoriaSeeder`, `TarifaSeeder`; el admin se crea
+> *inline*, sin línea propia). Los pilotos, robots y el torneo llegan con el **segundo**
+> comando de la Estrategia B: `php artisan db:seed --class=DemoSeeder`.
 
-| Campo | Valor |
-|-------|-------|
-| Correo | `admin@roboleague.test` |
-| Contraseña | `password` |
+### Credenciales para la demo
 
-> Si cargas el `DemoSeeder` (Estrategia B), también se crea una jueza:
-> `juez@roboleague.test` / `password`.
+> La contraseña de **todos** los usuarios sembrados es `password`.
+
+| Rol | Correo | Disponible con |
+|-----|--------|----------------|
+| **Administrador** | `admin@roboleague.test` | `migrate:fresh --seed` (siempre) |
+| **Juez** | `juez@roboleague.test` | `DemoSeeder` (Estrategia B) |
+| **Pilotos** (×14) | correos aleatorios `@example.*` | `DemoSeeder` (Estrategia B) |
+
+Para la demo basta con entrar como **administrador**: puede registrar instituciones,
+usuarios, robots, inscripciones, hacer inspección, combate, tiempos y ver reportes (las
+rutas de pista solo exigen sesión, no un rol específico). El juez sirve para *mostrar* el
+RBAC; los pilotos casi nunca necesitas iniciar sesión con ellos.
+
+> Los correos de los pilotos son aleatorios (los genera la factory). Si necesitas uno
+> concreto, búscalo en **Usuarios** o consulta:
+> `php artisan tinker --execute 'App\Models\User::where("rol","Piloto")->pluck("email");'`
 
 ---
 
