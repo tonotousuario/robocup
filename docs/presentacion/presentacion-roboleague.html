@@ -195,6 +195,18 @@ img,video,canvas,svg{max-width:100%;max-height:100%;}
 .connector{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--cyan2);font-family:var(--font-mono);font-size:14px}
 .connector .arr{font-size:26px;line-height:1}
 
+/* Diagrama ER completo (agrupado por dominio) */
+.ergroup{display:flex;flex-direction:column;gap:14px}
+.erband{font-family:var(--font-mono);font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:#04121f;background:linear-gradient(90deg,var(--cyan2),#54cfe6);border-radius:8px;padding:9px 14px;font-weight:700;text-align:center}
+.erent{background:rgba(7,32,54,.78);border:1.5px solid rgba(84,207,230,.4);border-radius:10px;padding:12px 15px;font-family:var(--font-mono);box-shadow:0 14px 34px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:4px}
+.erent.hl{border-color:var(--cyan2);box-shadow:0 0 0 1px rgba(84,207,230,.3),0 14px 34px rgba(0,0,0,.45)}
+.erent h5{font-size:19px;color:#eaffff;font-weight:700;letter-spacing:.02em;display:flex;justify-content:space-between;align-items:center}
+.erent h5 em{font-style:normal;font-size:13px;color:#04121f;background:var(--gold);border-radius:5px;padding:2px 8px;font-weight:700}
+.erent .erf{font-size:15px;color:#9fc4dc;line-height:1.3}
+.erent .erf .pk{color:var(--gold)} .erent .erf .fk{color:#a9c4ff}
+.erlegend{display:flex;flex-wrap:wrap;gap:24px;margin-top:24px;font-family:var(--font-mono);font-size:16px;color:#a9cbe4}
+.erlegend .pk{color:var(--gold)} .erlegend .fk{color:#a9c4ff} .erlegend em{font-style:normal;color:var(--gold);font-weight:700}
+
 /* Código */
 .code{background:#061226;border:1px solid rgba(84,207,230,.28);border-radius:14px;font-family:var(--font-mono);overflow:hidden;box-shadow:0 26px 70px rgba(0,0,0,.45)}
 .code .bar{display:flex;align-items:center;gap:8px;padding:13px 18px;background:rgba(84,207,230,.06);border-bottom:1px solid rgba(84,207,230,.18)}
@@ -481,6 +493,49 @@ img,video,canvas,svg{max-width:100%;max-height:100%;}
     </div>
   </section>
 
+  <!-- ============ 8B · DIAGRAMA ER COMPLETO ============ -->
+  <section class="slide blueprint">
+    <div class="grid"></div>
+    <div class="crop tl"></div><div class="crop tr"></div><div class="crop bl"></div><div class="crop br"></div>
+    <div class="pad">
+      <div class="sectab reveal r1" style="color:var(--cyan2)"><span class="n">03</span> La base de datos · Modelo Entidad-Relación<span class="ln"></span></div>
+      <h2 class="stitle reveal r1" style="color:#eaffff;font-size:64px">Doce entidades, <span class="c">un esquema íntegro</span></h2>
+      <p class="ssub reveal r2" style="color:#a9cbe4;font-size:25px;margin-top:10px">Cada relación es una clave foránea con su política de borrado. Agrupadas por dominio: actores y catálogos, registro y caja, competencia.</p>
+
+      <div class="er reveal r3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:26px">
+
+        <!-- Dominio A: actores y catálogos -->
+        <div class="ergroup">
+          <div class="erband">Actores y catálogos</div>
+          <div class="erent"><h5>Instituciones</h5><span class="erf"><b class="pk">id_institucion</b> PK</span><span class="erf">nombre · tipo</span></div>
+          <div class="erent"><h5>Categorias</h5><span class="erf"><b class="pk">id_categoria</b> PK</span><span class="erf">tipo_evaluacion</span></div>
+          <div class="erent"><h5>Usuarios</h5><span class="erf"><b class="pk">id</b> PK · correo</span><span class="erf">rol · 4 valores</span></div>
+          <div class="erent"><h5>Tarifas</h5><span class="erf"><b class="pk">id_tarifa</b> PK</span><span class="erf">monto · vigencia</span></div>
+        </div>
+
+        <!-- Dominio B: registro y caja -->
+        <div class="ergroup">
+          <div class="erband">Registro y caja</div>
+          <div class="erent hl"><h5>Robots</h5><span class="erf"><b class="pk">id_robot</b> PK</span><span class="erf"><b class="fk">id_piloto</b> → Usuarios</span><span class="erf"><b class="fk">id_institucion</b> → Inst. ◇null</span><span class="erf"><b class="fk">id_categoria</b> → Cat.</span></div>
+          <div class="erent hl"><h5>Inscripciones</h5><span class="erf"><b class="pk">id_inscripcion</b> PK</span><span class="erf"><b class="fk">id_robot</b> → Robots ⇲casc</span><span class="erf"><b class="fk">id_tarifa</b> · estado_pago</span></div>
+          <div class="erent"><h5>Inspecciones_Checklist</h5><span class="erf"><b class="fk">id_inscripcion</b> ⇲casc</span><span class="erf"><b class="fk">id_juez</b> → Usuarios</span><span class="erf">estado_aprobacion</span></div>
+          <div class="erent"><h5>Intentos_Tiempos</h5><span class="erf"><b class="fk">id_inscripcion</b> ⇲casc</span><span class="erf">num_intento · tiempo</span></div>
+        </div>
+
+        <!-- Dominio C: competencia -->
+        <div class="ergroup">
+          <div class="erband">Competencia</div>
+          <div class="erent"><h5>Encuentros</h5><span class="erf"><b class="pk">id_encuentro</b> PK</span><span class="erf"><b class="fk">id_categoria</b> ⇲casc</span><span class="erf"><b class="fk">id_encuentro_siguiente</b> ↺self</span></div>
+          <div class="erent"><h5>Participantes_Encuentro <em>N:M</em></h5><span class="erf"><b class="fk">id_encuentro</b> ⇲casc</span><span class="erf"><b class="fk">id_inscripcion</b> ⇲casc</span></div>
+          <div class="erent"><h5>Rounds_Encuentro</h5><span class="erf"><b class="fk">id_encuentro</b> ⇲casc</span><span class="erf"><b class="fk">id_inscripcion_ganador</b> ◇null</span></div>
+          <div class="erent"><h5>Amonestaciones</h5><span class="erf"><b class="fk">id_encuentro</b> ⇲casc</span><span class="erf"><b class="fk">id_inscripcion</b> · <b class="fk">id_juez</b></span></div>
+        </div>
+      </div>
+
+      <div class="erlegend reveal r5"><span><b class="pk">●</b> Clave primaria</span><span><b class="fk">●</b> Clave foránea</span><span>⇲casc borrado en cascada</span><span>◇null SET NULL</span><span>↺self auto-referencia</span><span><em>N:M</em> tabla puente</span></div>
+    </div>
+  </section>
+
   <!-- ============ 9 · MODELO HÍBRIDO ============ -->
   <section class="slide blueprint">
     <div class="grid"></div>
@@ -540,6 +595,46 @@ img,video,canvas,svg{max-width:100%;max-height:100%;}
   <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> <span class="fnname">exigir_aprobado</span>();
 <span class="cm">-- ↳ si la inscripción no tiene un checklist 'Aprobado', RAISE EXCEPTION</span>
 <span class="cm">--   ningún emparejamiento ni tiempo se guarda. Equidad garantizada.</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 10B · ROLES Y SEGURIDAD (RBAC) ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <div class="pad">
+      <div class="sectab reveal r1"><span class="n">03</span> La base de datos · Seguridad en capas<span class="ln"></span></div>
+      <h2 class="stitle reveal r1" style="font-size:64px">Defensa en profundidad: <span class="c">rol + trigger</span></h2>
+      <p class="ssub reveal r2" style="font-size:26px;margin-top:12px">Antes de tocar los datos, la petición cruza dos filtros independientes. Si la app fallara, la base de datos sigue siendo la última palabra.</p>
+
+      <div class="flow reveal r3" style="margin-top:28px">
+        <div class="fbox"><div class="t">Sesión autenticada</div><div class="s">Fortify · usuario verificado</div></div>
+        <span class="farr">→</span>
+        <div class="fbox" style="border-color:rgba(96,140,255,.5);background:linear-gradient(160deg,rgba(96,140,255,.12),var(--panel3))"><div class="t" style="color:#a9c4ff">Capa app · middleware role:</div><div class="s">autoriza por rol o aborta 403</div></div>
+        <span class="farr">→</span>
+        <div class="fbox ok"><div class="t" style="color:var(--green)">Capa datos · trigger</div><div class="s">exige checklist 'Aprobado'</div></div>
+      </div>
+
+      <div class="demo-grid reveal r4" style="grid-template-columns:1.06fr .94fr;gap:44px;margin-top:30px">
+        <div class="code">
+          <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="fn">routes/web.php · EnsureUserHasRole</span></div>
+<pre><span class="cm">// solo Administrador: alta de instituciones y usuarios</span>
+Route::<span class="fnname">middleware</span>([<span class="str">'auth'</span>,<span class="str">'verified'</span>,<span class="str">'role:Administrador'</span>])
+  -><span class="fnname">group</span>(<span class="kw">fn</span>() => [<span class="var">$instituciones</span>, <span class="var">$usuarios</span>]);
+
+<span class="cm">// reportes de caja: Administrador y Juez</span>
+Route::<span class="fnname">middleware</span>([<span class="str">'auth'</span>,<span class="str">'verified'</span>,<span class="str">'role:Administrador,Juez'</span>]) …
+
+<span class="kw">if</span> (<span class="var">$user</span> === <span class="kw">null</span> || !<span class="fnname">in_array</span>(<span class="var">$user</span>->rol->value, <span class="var">$roles</span>)) {
+    <span class="fnname">abort</span>(<span class="num">403</span>);   <span class="cm">// acceso denegado, no se ejecuta la ruta</span>
+}</pre>
+        </div>
+        <div class="demo-feats">
+          <div class="feat reveal r4"><div class="b" style="color:var(--gold);border-color:rgba(255,210,122,.4);background:rgba(255,210,122,.1)">A</div><div><div class="tt">Administrador</div><div class="dd">Control total: instituciones, usuarios, caja y toda la operación.</div></div></div>
+          <div class="feat reveal r5"><div class="b">J</div><div><div class="tt">Juez</div><div class="dd">Inspección técnica, combate/tiempos, amonestaciones y reportes.</div></div></div>
+          <div class="feat reveal r6"><div class="b">C</div><div><div class="tt">Coach</div><div class="dd">Gestiona su institución: registra robots e inscribe a su gente.</div></div></div>
+          <div class="feat reveal r7"><div class="b">P</div><div><div class="tt">Piloto</div><div class="dd">Conduce sus robots; consulta su estado y resultados.</div></div></div>
+        </div>
       </div>
     </div>
   </section>
@@ -725,7 +820,7 @@ img,video,canvas,svg{max-width:100%;max-height:100%;}
 </div>
 
 <!-- Chrome -->
-<div class="counter" id="counter"><b>01</b> / 18</div>
+<div class="counter" id="counter"><b>01</b> / 20</div>
 <div class="hint">← → · Espacio · E para editar</div>
 <div class="deck-controls"><button id="prevBtn" aria-label="Anterior">‹</button><button id="nextBtn" aria-label="Siguiente">›</button></div>
 
