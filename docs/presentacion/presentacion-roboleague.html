@@ -131,6 +131,25 @@ img,video,canvas,svg{max-width:100%;max-height:100%;}
    6. PORTADA / CIERRE
    =========================================================== */
 .cover{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 130px}
+
+/* Apertura: logo WolfTech */
+.logo-open{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 160px}
+.logo-open .wolf{width:300px;height:auto;margin-bottom:14px;filter:drop-shadow(0 0 42px rgba(34,211,238,.45)) drop-shadow(0 0 14px rgba(79,140,255,.5));animation:wolfpulse 4.5s ease-in-out infinite}
+@keyframes wolfpulse{0%,100%{filter:drop-shadow(0 0 34px rgba(34,211,238,.38)) drop-shadow(0 0 12px rgba(79,140,255,.45))}50%{filter:drop-shadow(0 0 62px rgba(34,211,238,.72)) drop-shadow(0 0 20px rgba(79,140,255,.6))}}
+.logo-open .wolfname{font-family:var(--font-display);font-weight:700;font-size:132px;line-height:.9;letter-spacing:-2px;margin-top:6px;
+  background:linear-gradient(100deg,#fff 0%,#8fc2ff 50%,#22d3ee 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 60px rgba(34,211,238,.18)}
+.logo-open .wolftag{font-family:var(--font-display);font-size:30px;color:#c5d4f2;max-width:1080px;margin-top:22px;line-height:1.4}
+
+/* Intro / cold-open: galería de fotos de competencias */
+.introwrap{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 120px}
+.intro-gallery{display:flex;gap:26px;margin-top:40px;height:560px}
+.photoframe{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.photoframe::after{content:"";position:absolute;inset:0;border-radius:18px;box-shadow:inset 0 0 0 1px rgba(120,160,255,.14);pointer-events:none}
+.photoframe img{width:100%;height:100%;object-fit:cover;display:block}
+.photoframe.hero{flex:1}
+.photoframe.tall{width:320px;flex:none}
+.photoframe .cap{position:absolute;left:0;right:0;bottom:0;padding:34px 20px 16px;font-family:var(--font-mono);font-size:17px;color:#e7eeff;letter-spacing:.02em;background:linear-gradient(to top,rgba(4,7,14,.9),transparent)}
+.photoframe .cap b{color:var(--cyan2)}
 .cover .scan{position:absolute;left:0;right:0;height:2px;top:0;background:linear-gradient(90deg,transparent,rgba(34,211,238,.5),transparent);filter:blur(.5px);animation:scan 7s linear infinite}
 @keyframes scan{0%{transform:translateY(120px);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(960px);opacity:0}}
 .cover .dot{position:absolute;border-radius:50%;background:var(--cyan);box-shadow:0 0 14px var(--cyan);opacity:.7;animation:floaty 7s ease-in-out infinite}
@@ -330,8 +349,46 @@ img,video,canvas,svg{max-width:100%;max-height:100%;}
 <div class="deck-viewport">
 <main class="deck-stage" id="deckStage">
 
-  <!-- ============ 1 · PORTADA ============ -->
+  <!-- ============ 0 · LOGO WOLFTECH (apertura) ============ -->
   <section class="slide active">
+    <div class="grid"></div>
+    <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
+    <div class="logo-open">
+      <div class="scan"></div>
+      <img class="wolf reveal rs r1" src="img/introduccion/logo.png" alt="Logo de WolfTech: cabeza de lobo con circuitos">
+      <h1 class="wolfname reveal r2">WolfTech</h1>
+      <p class="wolftag reveal r3">Seis ingenieros, un lobo con circuitos y una obsesión: que ningún torneo de robótica se vuelva a organizar en una hoja de cálculo.</p>
+      <span class="tag-pill reveal r4" style="align-self:center;margin-top:8px">⚠ Contiene robots, café y una base de datos en 3FN</span>
+    </div>
+  </section>
+
+  <!-- ============ 0B · INTRO / COLD OPEN (competencias) ============ -->
+  <section class="slide">
+    <div class="grid"></div>
+    <span class="dot d2"></span><span class="dot d3"></span>
+    <div class="introwrap">
+      <span class="tag-pill reveal r1">Robótica competitiva · en la pista</span>
+      <h2 class="reveal r1" style="font-family:var(--font-display);font-weight:700;font-size:66px;line-height:1.05;letter-spacing:-1px;max-width:1320px">De los torneos a los que vamos <span style="color:var(--cyan)">nació este proyecto</span></h2>
+      <p class="reveal r2" style="font-family:var(--font-display);font-size:27px;color:var(--muted);margin-top:16px;max-width:1180px">Pilotos, robots, inscripciones, inspección y resultados en tiempo real: pura logística que hoy se resuelve a mano.</p>
+      <div class="intro-gallery">
+        <div class="photoframe hero reveal rs r3">
+          <img src="img/introduccion/signal-2026-06-16-065154.jpeg" alt="Equipo de robótica con sus robots y trofeos en una competencia">
+          <span class="cap"><b>Nuestro equipo</b> — competencia universitaria</span>
+        </div>
+        <div class="photoframe tall reveal rs r4">
+          <img src="img/introduccion/signal-2026-06-16-065053.jpeg" alt="Robot de combate sumo dentro del dohyo">
+          <span class="cap"><b>Combate</b> — sumo en el dohyo</span>
+        </div>
+        <div class="photoframe tall reveal rs r5">
+          <img src="img/introduccion/signal-2026-06-16-065110.jpeg" alt="Decenas de robots alineados para inspección técnica">
+          <span class="cap"><b>Inspección</b> — decenas de robots</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 1 · PORTADA ============ -->
+  <section class="slide">
     <div class="grid"></div>
     <div class="cover">
       <div class="scan"></div>
@@ -820,7 +877,7 @@ Route::<span class="fnname">middleware</span>([<span class="str">'auth'</span>,<
 </div>
 
 <!-- Chrome -->
-<div class="counter" id="counter"><b>01</b> / 20</div>
+<div class="counter" id="counter"><b>01</b> / 22</div>
 <div class="hint">← → · Espacio · E para editar</div>
 <div class="deck-controls"><button id="prevBtn" aria-label="Anterior">‹</button><button id="nextBtn" aria-label="Siguiente">›</button></div>
 
